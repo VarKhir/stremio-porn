@@ -39,6 +39,9 @@ describe('DebridClient', () => {
         if (url.includes('real-debrid')) {
           return Promise.reject(new Error('rd unavailable'))
         }
+        if (url.includes('checkcached')) {
+          return Promise.resolve({ body: { data: { cached: true } } })
+        }
         return Promise.resolve({ body: { link: 'https://torbox.test/direct.mp4' } })
       }),
     }
@@ -49,8 +52,45 @@ describe('DebridClient', () => {
 
     let [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video2' }])
 
-    expect(mockHttpClient.request).toHaveBeenCalledTimes(2)
-    expect(mockHttpClient.request.mock.calls[1][0]).toBe('https://api.torbox.app/v1/links/instant')
+    expect(mockHttpClient.request).toHaveBeenCalledTimes(3)
+    expect(mockHttpClient.request.mock.calls[1][0]).toContain('checkcached')
+    expect(mockHttpClient.request.mock.calls[2][0]).toBe('https://api.torbox.app/v1/links/instant')
+    expect(stream.url).toBe('https://torbox.test/direct.mp4')
+  })
+
+  test('skips Torbox unrestrict when cache check returns not cached', async () => {
+    let mockHttpClient = {
+      request: jest.fn((url) => {
+        if (url.includes('checkcached')) {
+          return Promise.resolve({ body: { data: { cached: false } } })
+        }
+        return Promise.resolve({ body: {} })
+      }),
+    }
+    let debridClient = new DebridClient(mockHttpClient, { torboxToken: 'tor-token' })
+
+    let [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video' }])
+
+    expect(stream.url).toBe('http://example.com/video')
+    let unrestrictCalls = mockHttpClient.request.mock.calls.filter(
+      (call) => call[0].includes('links/instant')
+    )
+    expect(unrestrictCalls).toHaveLength(0)
+  })
+
+  test('proceeds with Torbox unrestrict when cache check fails', async () => {
+    let mockHttpClient = {
+      request: jest.fn((url) => {
+        if (url.includes('checkcached')) {
+          return Promise.reject(new Error('network error'))
+        }
+        return Promise.resolve({ body: { link: 'https://torbox.test/direct.mp4' } })
+      }),
+    }
+    let debridClient = new DebridClient(mockHttpClient, { torboxToken: 'tor-token' })
+
+    let [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video' }])
+
     expect(stream.url).toBe('https://torbox.test/direct.mp4')
   })
 })
