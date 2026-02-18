@@ -48,16 +48,16 @@ class DebridClient {
     }
 
     try {
-      let encoded = encodeURIComponent(url)
-      let checkUrl = `${this.torboxCacheEndpoint}?url=${encoded}`
-      let { body } = await this.httpClient.request(checkUrl, {
+      const encoded = encodeURIComponent(url)
+      const checkUrl = `${this.torboxCacheEndpoint}?url=${encoded}`
+      const { body } = await this.httpClient.request(checkUrl, {
         headers: {
           Authorization: `Bearer ${this.torboxToken}`,
         },
         json: true,
       })
 
-      if (body && body.data && body.data.cached === true) {
+      if (body?.data?.cached === true) {
         return true
       }
 
@@ -73,7 +73,7 @@ class DebridClient {
     }
 
     try {
-      let { body } = await this.httpClient.request(
+      const { body } = await this.httpClient.request(
         'https://api.real-debrid.com/rest/1.0/unrestrict/link',
         {
           method: 'POST',
@@ -97,13 +97,13 @@ class DebridClient {
     }
 
     try {
-      let isCached = await this._checkTorboxCache(url)
+      const isCached = await this._checkTorboxCache(url)
 
       if (isCached === false) {
         return null
       }
 
-      let { body } = await this.httpClient.request(this.torboxEndpoint, {
+      const { body } = await this.httpClient.request(this.torboxEndpoint, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.torboxToken}`,
@@ -144,23 +144,22 @@ class DebridClient {
     }
 
     return Promise.all(streams.map(async (stream) => {
-      if (!stream || !stream.url) {
+      if (!stream?.url) {
         return stream
       }
 
-      let result = await this._unrestrict(stream.url)
+      const result = await this._unrestrict(stream.url)
 
       if (result && result.url !== stream.url) {
-        let tag = result.service === 'TB' ?
+        const tag = result.service === 'TB' ?
           '[TB] ⚡' : `[${result.service}]`
         return {
           ...stream,
           url: result.url,
           name: `${tag} ${stream.name || 'Debrid'}`,
         }
-      } else {
-        return stream
       }
+      return stream
     }))
   }
 }

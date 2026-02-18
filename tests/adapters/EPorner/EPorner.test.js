@@ -1,10 +1,11 @@
 import { readFileSync } from 'fs'
-import testAdapter from '../testAdapter'
-import EPorner from '../../../src/adapters/EPorner'
+import { resolve } from 'path'
+import testAdapter from '../testAdapter.js'
+import EPorner from '../../../src/adapters/EPorner.js'
 
 
-const API_RESPONSE = readFileSync(`${__dirname}/apiResponse.xml`, 'utf8')
-const MOVIE_PAGE = readFileSync(`${__dirname}/moviePage.html`, 'utf8')
+const API_RESPONSE = readFileSync(resolve(__dirname, 'apiResponse.xml'), 'utf8')
+const MOVIE_PAGE = readFileSync(resolve(__dirname, 'moviePage.html'), 'utf8')
 
 const ITEMS = [{
   id: '6NQ6SyoGpTm',
@@ -40,8 +41,8 @@ describe('EPorner', () => {
 
   describe('#_parseMoviePage()', () => {
     test('retrieves the item object from the sample movie page', () => {
-      let adapter = new EPorner()
-      let result = adapter._parseMoviePage(MOVIE_PAGE)
+      const adapter = new EPorner()
+      const result = adapter._parseMoviePage(MOVIE_PAGE)
 
       expect(result).toEqual({
         _source: 'moviePage',
@@ -63,8 +64,8 @@ describe('EPorner', () => {
 
   describe('#_parseApiResponse()', () => {
     test('retrieves an array of items from the sample API response', () => {
-      let adapter = new EPorner()
-      let results = adapter._parseApiResponse(API_RESPONSE)
+      const adapter = new EPorner()
+      const results = adapter._parseApiResponse(API_RESPONSE)
 
       expect(results).toHaveLength(10)
       expect(results[0]).toEqual({

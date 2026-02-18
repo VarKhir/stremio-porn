@@ -1,27 +1,27 @@
-import DebridClient from '../src/DebridClient'
+import DebridClient from '../src/DebridClient.js'
 
 
 describe('DebridClient', () => {
   test('returns the original streams when disabled', async () => {
-    let mockHttpClient = { request: jest.fn() }
-    let debridClient = new DebridClient(mockHttpClient)
+    const mockHttpClient = { request: jest.fn() }
+    const debridClient = new DebridClient(mockHttpClient)
 
-    let streams = [{ url: 'http://example.com/file.mp4' }]
-    let result = await debridClient.unrestrictStreams(streams)
+    const streams = [{ url: 'http://example.com/file.mp4' }]
+    const result = await debridClient.unrestrictStreams(streams)
 
     expect(result).toEqual(streams)
     expect(mockHttpClient.request).not.toHaveBeenCalled()
   })
 
   test('uses Real-Debrid when a token is provided', async () => {
-    let mockHttpClient = {
+    const mockHttpClient = {
       request: jest.fn().mockResolvedValue({
         body: { download: 'https://real-debrid.test/direct.mp4' },
       }),
     }
-    let debridClient = new DebridClient(mockHttpClient, { realDebridToken: 'token' })
+    const debridClient = new DebridClient(mockHttpClient, { realDebridToken: 'token' })
 
-    let [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video' }])
+    const [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video' }])
 
     expect(mockHttpClient.request).toHaveBeenCalledWith(
       'https://api.real-debrid.com/rest/1.0/unrestrict/link',
@@ -34,7 +34,7 @@ describe('DebridClient', () => {
   })
 
   test('falls back to Torbox when Real-Debrid fails', async () => {
-    let mockHttpClient = {
+    const mockHttpClient = {
       request: jest.fn((url) => {
         if (url.includes('real-debrid')) {
           return Promise.reject(new Error('rd unavailable'))
@@ -45,12 +45,12 @@ describe('DebridClient', () => {
         return Promise.resolve({ body: { link: 'https://torbox.test/direct.mp4' } })
       }),
     }
-    let debridClient = new DebridClient(mockHttpClient, {
+    const debridClient = new DebridClient(mockHttpClient, {
       realDebridToken: 'token',
       torboxToken: 'tor-token',
     })
 
-    let [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video2' }])
+    const [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video2' }])
 
     expect(mockHttpClient.request).toHaveBeenCalledTimes(3)
     expect(mockHttpClient.request.mock.calls[1][0]).toContain('checkcached')
@@ -60,7 +60,7 @@ describe('DebridClient', () => {
   })
 
   test('skips Torbox unrestrict when cache check returns not cached', async () => {
-    let mockHttpClient = {
+    const mockHttpClient = {
       request: jest.fn((url) => {
         if (url.includes('checkcached')) {
           return Promise.resolve({ body: { data: { cached: false } } })
@@ -68,19 +68,19 @@ describe('DebridClient', () => {
         return Promise.resolve({ body: {} })
       }),
     }
-    let debridClient = new DebridClient(mockHttpClient, { torboxToken: 'tor-token' })
+    const debridClient = new DebridClient(mockHttpClient, { torboxToken: 'tor-token' })
 
-    let [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video' }])
+    const [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video' }])
 
     expect(stream.url).toBe('http://example.com/video')
-    let unrestrictCalls = mockHttpClient.request.mock.calls.filter(
+    const unrestrictCalls = mockHttpClient.request.mock.calls.filter(
       (call) => call[0].includes('links/instant')
     )
     expect(unrestrictCalls).toHaveLength(0)
   })
 
   test('proceeds with Torbox unrestrict when cache check fails', async () => {
-    let mockHttpClient = {
+    const mockHttpClient = {
       request: jest.fn((url) => {
         if (url.includes('checkcached')) {
           return Promise.reject(new Error('network error'))
@@ -88,25 +88,25 @@ describe('DebridClient', () => {
         return Promise.resolve({ body: { link: 'https://torbox.test/direct.mp4' } })
       }),
     }
-    let debridClient = new DebridClient(mockHttpClient, { torboxToken: 'tor-token' })
+    const debridClient = new DebridClient(mockHttpClient, { torboxToken: 'tor-token' })
 
-    let [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video' }])
+    const [stream] = await debridClient.unrestrictStreams([{ url: 'http://example.com/video' }])
 
     expect(stream.url).toBe('https://torbox.test/direct.mp4')
     expect(stream.name).toBe('[TB] ⚡ Debrid')
   })
 
   test('preserves existing stream name with debrid tag', async () => {
-    let mockHttpClient = {
+    const mockHttpClient = {
       request: jest.fn().mockResolvedValue({
         body: { download: 'https://real-debrid.test/direct.mp4' },
       }),
     }
-    let debridClient = new DebridClient(mockHttpClient, {
+    const debridClient = new DebridClient(mockHttpClient, {
       realDebridToken: 'token',
     })
 
-    let [stream] = await debridClient.unrestrictStreams([
+    const [stream] = await debridClient.unrestrictStreams([
       { url: 'http://example.com/video', name: 'PornHub' },
     ])
 

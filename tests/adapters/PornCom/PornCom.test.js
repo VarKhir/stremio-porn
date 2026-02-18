@@ -1,12 +1,11 @@
-/* eslint-disable camelcase */
-
 import { readFileSync } from 'fs'
-import testAdapter from '../testAdapter'
-import PornCom from '../../../src/adapters/PornCom'
+import { resolve } from 'path'
+import testAdapter from '../testAdapter.js'
+import PornCom from '../../../src/adapters/PornCom.js'
 
 
-const API_RESPONSE = readFileSync(`${__dirname}/apiResponse.xml`, 'utf8')
-const EMBED_PAGE = readFileSync(`${__dirname}/embedPage.xml`, 'utf8')
+const API_RESPONSE = readFileSync(resolve(__dirname, 'apiResponse.xml'), 'utf8')
+const EMBED_PAGE = readFileSync(resolve(__dirname, 'embedPage.xml'), 'utf8')
 
 const ITEMS = [{
   id: '4163325',
@@ -47,8 +46,8 @@ describe('PornCom', () => {
 
   describe('#_extractQualitiesFromEmbedPage()', () => {
     test('retrieves an array of quality strings from the sample embed page', () => {
-      let adapter = new PornCom()
-      let results = adapter._extractQualitiesFromEmbedPage(EMBED_PAGE)
+      const adapter = new PornCom()
+      const results = adapter._extractQualitiesFromEmbedPage(EMBED_PAGE)
 
       expect(results).toEqual(['144', '240'])
     })
@@ -56,8 +55,8 @@ describe('PornCom', () => {
 
   describe('#_parseApiResponse()', () => {
     test('retrieves an array of items from the sample API response', () => {
-      let adapter = new PornCom()
-      let results = adapter._parseApiResponse(API_RESPONSE)
+      const adapter = new PornCom()
+      const results = adapter._parseApiResponse(API_RESPONSE)
 
       expect(results).toHaveLength(70)
       expect(results[0]).toEqual({

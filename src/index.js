@@ -1,10 +1,13 @@
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import http from 'http'
 import Stremio from 'stremio-addons'
 import serveStatic from 'serve-static'
 import chalk from 'chalk'
-import pkg from '../package.json'
-import PornClient from './PornClient'
+import PornClient from './PornClient.js'
 
+
+const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'))
 
 const SUPPORTED_METHODS = [
   'stream.find', 'meta.find', 'meta.search', 'meta.get',
@@ -22,7 +25,6 @@ const IS_PROD = process.env.NODE_ENV === 'production'
 
 
 if (IS_PROD && ID === DEFAULT_ID) {
-  // eslint-disable-next-line no-console
   console.error(
     chalk.red(
       '\nWhen running in production, a non-default addon identifier must be specified\n'
@@ -37,23 +39,22 @@ function parseUserConfig(configStr) {
   }
 
   try {
-    // Convert URL-safe base64 back to standard base64
-    let standard = configStr.replace(/-/g, '+').replace(/_/g, '/')
-    let decoded = Buffer.from(standard, 'base64').toString('utf8')
-    let config = JSON.parse(decoded)
+    const standard = configStr.replace(/-/g, '+').replace(/_/g, '/')
+    const decoded = Buffer.from(standard, 'base64').toString('utf8')
+    const config = JSON.parse(decoded)
     return config || {}
   } catch (err) {
     return {}
   }
 }
 
-let baseClientOptions = {
+const baseClientOptions = {
   proxy: PROXY,
   cache: CACHE,
   usenetStreamerUrl: USENET_STREAMER,
 }
-let adapters = PornClient.getAdapters(baseClientOptions)
-let availableSites = adapters.map((a) => a.DISPLAY_NAME).join(', ')
+const adapters = PornClient.getAdapters(baseClientOptions)
+const availableSites = adapters.map((a) => a.DISPLAY_NAME).join(', ')
 
 const MANIFEST = {
   name: 'Porn',
@@ -69,13 +70,11 @@ Watch porn videos and webcam streams from ${availableSites}\
   sorts: PornClient.getSorts(baseClientOptions, adapters),
   catalogs: PornClient.getCatalogs(baseClientOptions, adapters),
   resources: ['stream', 'meta', 'catalog'],
-  // Stremio manifest allows advertising supported external id prefixes for stream requests
   idPrefixes: PornClient.getIdPrefixes(baseClientOptions, adapters),
   endpoint: `${ENDPOINT}/stremioget/stremio/v1`,
   logo: `${ENDPOINT}/logo.png`,
   icon: `${ENDPOINT}/logo.png`,
   background: `${ENDPOINT}/bg.jpg`,
-  // OBSOLETE: used in pre-4.0 stremio instead of idProperty/types
   filter: {
     [`query.${PornClient.ID}`]: { $exists: true },
     'query.type': { $in: ['movie', 'tv'] },
@@ -93,16 +92,11 @@ function makeMethod(client, methodName) {
     } catch (err) {
       error = err
 
-      /* eslint-disable no-console */
       console.error(
-        // eslint-disable-next-line prefer-template
-        chalk.gray(new Date().toLocaleString()) +
-        ' An error has occurred while processing ' +
-        `the following request to ${methodName}:`
+        `${chalk.gray(new Date().toLocaleString())} An error has occurred while processing the following request to ${methodName}:`
       )
       console.error(request)
       console.error(err)
-      /* eslint-enable no-console */
     }
 
     cb(error, response)
@@ -117,13 +111,12 @@ function makeMethods(client, methodNames) {
 }
 
 
-let defaultClient = new PornClient(baseClientOptions)
-let defaultMethods = makeMethods(defaultClient, SUPPORTED_METHODS)
-let defaultAddon = new Stremio.Server(defaultMethods, MANIFEST)
+const defaultClient = new PornClient(baseClientOptions)
+const defaultMethods = makeMethods(defaultClient, SUPPORTED_METHODS)
+const defaultAddon = new Stremio.Server(defaultMethods, MANIFEST)
 
-// Cache for per-user PornClient instances (keyed by config string)
-let userClients = {}
-let userClientKeys = []
+const userClients = {}
+const userClientKeys = []
 const MAX_USER_CLIENTS = 100
 
 function getClientForConfig(configStr) {
@@ -135,56 +128,51 @@ function getClientForConfig(configStr) {
     return userClients[configStr]
   }
 
-  let userConfig = parseUserConfig(configStr)
+  const userConfig = parseUserConfig(configStr)
 
   if (!userConfig.realDebridToken && !userConfig.torboxToken) {
     return defaultClient
   }
 
-  let clientOptions = {
+  const clientOptions = {
     ...baseClientOptions,
     realDebridToken: userConfig.realDebridToken,
     torboxToken: userConfig.torboxToken,
   }
 
-  let client = new PornClient(clientOptions)
+  const client = new PornClient(clientOptions)
   userClients[configStr] = client
   userClientKeys.push(configStr)
 
-  // Evict oldest entries when cache exceeds limit
   while (userClientKeys.length > MAX_USER_CLIENTS) {
-    let oldKey = userClientKeys.shift()
+    const oldKey = userClientKeys.shift()
     delete userClients[oldKey]
   }
 
   return client
 }
 
-let server = http.createServer((req, res) => {
-  // Handle user-configured addon routes: /<base64config>/stremioget/stremio/v1
-  // Uses URL-safe base64 (- and _ instead of + and /)
-  let configMatch = req.url.match(
+const server = http.createServer((req, res) => {
+  const configMatch = req.url.match(
     /^\/([A-Za-z0-9_-]+=*)\/stremioget\//
   )
-  let configStr = configMatch ? configMatch[1] : null
+  const configStr = configMatch ? configMatch[1] : null
 
   if (configStr) {
-    let client = getClientForConfig(configStr)
-    let methods = makeMethods(client, SUPPORTED_METHODS)
-    let configuredManifest = {
+    const client = getClientForConfig(configStr)
+    const methods = makeMethods(client, SUPPORTED_METHODS)
+    const configuredManifest = {
       ...MANIFEST,
       endpoint: `${ENDPOINT}/${configStr}/stremioget/stremio/v1`,
     }
-    let configuredAddon = new Stremio.Server(methods, configuredManifest)
-    // Rewrite URL to remove the config prefix
-    // so the Stremio server can handle it
+    const configuredAddon = new Stremio.Server(methods, configuredManifest)
     req.url = req.url.slice(configStr.length + 1)
     configuredAddon.middleware(req, res, () => res.end())
     return
   }
 
   if (req.url === '/api/status') {
-    let status = {
+    const status = {
       manifest: {
         name: MANIFEST.name,
         version: MANIFEST.version,
@@ -194,7 +182,7 @@ let server = http.createServer((req, res) => {
       },
       config: {
         cache: CACHE !== '0',
-        proxy: !!PROXY,
+        proxy: Boolean(PROXY),
       },
     }
     res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -208,7 +196,7 @@ let server = http.createServer((req, res) => {
 
 server
   .on('listening', () => {
-    let values = {
+    const values = {
       endpoint: chalk.green(MANIFEST.endpoint),
       id: ID === DEFAULT_ID ? chalk.red(ID) : chalk.green(ID),
       env: IS_PROD ? chalk.green('production') : chalk.green('development'),
@@ -218,7 +206,6 @@ server
         chalk.green(CACHE === '1' ? 'on' : CACHE),
     }
 
-    // eslint-disable-next-line no-console
     console.log(`
     ${MANIFEST.name} Addon is listening on port ${PORT}
 

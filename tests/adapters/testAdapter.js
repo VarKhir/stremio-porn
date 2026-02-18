@@ -1,4 +1,4 @@
-import HttpClient from '../../src/HttpClient'
+import HttpClient from '../../src/HttpClient.js'
 
 
 function testAdapter(AdapterClass, items = []) {
@@ -8,7 +8,7 @@ function testAdapter(AdapterClass, items = []) {
     let adapter
 
     beforeEach(() => {
-      let httpClient = new HttpClient({
+      const httpClient = new HttpClient({
         proxy: process.env.STREMIO_PORN_PROXY,
       })
       adapter = new AdapterClass(httpClient)
@@ -16,8 +16,8 @@ function testAdapter(AdapterClass, items = []) {
 
     describe('#find()', () => {
       test('when no request query is provided, returns trending items', async () => {
-        let type = AdapterClass.SUPPORTED_TYPES[0]
-        let results = await adapter.find({
+        const type = AdapterClass.SUPPORTED_TYPES[0]
+        const results = await adapter.find({
           query: { type },
         })
 
@@ -28,10 +28,10 @@ function testAdapter(AdapterClass, items = []) {
       })
 
       test('when a search string is provided, returns matching items', async () => {
-        let search = 'deep'
-        let limit = 3
-        let type = AdapterClass.SUPPORTED_TYPES[0]
-        let results = await adapter.find({
+        const search = 'deep'
+        const limit = 3
+        const type = AdapterClass.SUPPORTED_TYPES[0]
+        const results = await adapter.find({
           query: { search, type },
           limit,
         })
@@ -48,8 +48,8 @@ function testAdapter(AdapterClass, items = []) {
         .filter((item) => item.match)
         .forEach(({ id, type, match }) => {
           test(`retrieves ${type} ${id}`, async () => {
-            let query = { type, id }
-            let [result] = await adapter.getItem({ query })
+            const query = { type, id }
+            const [result] = await adapter.getItem({ query })
 
             expect(result).toMatchObject(match)
           })
@@ -61,7 +61,7 @@ function testAdapter(AdapterClass, items = []) {
         .filter((item) => item.streams === true)
         .forEach(({ id, type }) => {
           test(`doesn't throw for ${type} ${id}`, async () => {
-            let query = { type, id }
+            const query = { type, id }
             return adapter.getStreams({ query })
           })
         })
@@ -70,12 +70,12 @@ function testAdapter(AdapterClass, items = []) {
         .filter((item) => Array.isArray(item.streams))
         .forEach(({ id, type, streams }) => {
           test(`retrieves streams for ${type} ${id}`, async () => {
-            let query = { type, id }
-            let results = await adapter.getStreams({ query })
+            const query = { type, id }
+            const results = await adapter.getStreams({ query })
 
             expect(results).toHaveLength(streams.length)
             streams.forEach((stream) => {
-              let includesStream = Boolean(results.find((result) => {
+              const includesStream = Boolean(results.find((result) => {
                 return result.url.includes(stream)
               }))
               expect(includesStream).toBe(true)

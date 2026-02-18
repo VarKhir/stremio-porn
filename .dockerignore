@@ -1,7 +1,7 @@
 # Ignore everything
 .*
 node_modules
-src
+dist
 tests
 wip
 *.md
@@ -9,6 +9,6 @@ wip
 docker-compose.yml
 
 # Include only what's needed
-!dist/**
+!src/**
 !static/**
 !package.json

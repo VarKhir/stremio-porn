@@ -1,9 +1,10 @@
 import { readFileSync } from 'fs'
-import testAdapter from '../testAdapter'
-import YouPorn from '../../../src/adapters/YouPorn'
+import { resolve } from 'path'
+import testAdapter from '../testAdapter.js'
+import YouPorn from '../../../src/adapters/YouPorn.js'
 
 
-const EMBED_PAGE = readFileSync(`${__dirname}/embeddedMoviePage.html`, 'utf8')
+const EMBED_PAGE = readFileSync(resolve(__dirname, 'embeddedMoviePage.html'), 'utf8')
 
 const ITEMS = [{
   id: '11822513',
@@ -27,8 +28,8 @@ describe('YouPorn', () => {
 
   describe('#_extractStreamsFromEmbed()', () => {
     test('retrieves a stream from a sample embedded movie page', () => {
-      let adapter = new YouPorn()
-      let results = adapter._extractStreamsFromEmbed(EMBED_PAGE)
+      const adapter = new YouPorn()
+      const results = adapter._extractStreamsFromEmbed(EMBED_PAGE)
 
       expect(results).toEqual([{
         quality: '720p',
