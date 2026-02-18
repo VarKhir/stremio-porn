@@ -26,7 +26,7 @@ class UsenetStreamer extends _BaseAdapter.default {
       return false;
     }
 
-    return /^tt\d+/i.test(id) || /^tmdb:/i.test(id) || /^tvdb:/i.test(id) || /^nzbdav:/i.test(id);
+    return /^(tt\d+|tmdb:|tvdb:|nzbdav:)/i.test(id);
   }
 
   _normalizeStream(stream) {

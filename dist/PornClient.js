@@ -44,7 +44,9 @@ const CACHE_PREFIX = 'stremio-porn|'; // Making multiple requests to multiple ad
 const MAX_ADAPTERS_PER_REQUEST = 1;
 const BASE_ADAPTERS = [_PornHub.default, _RedTube.default, _YouPorn.default, _SpankWire.default, _PornCom.default, _Chaturbate.default];
 
-const isUsenetAdapter = adapter => adapter instanceof _UsenetStreamer.default;
+const isUsenetAdapter = adapter => {
+  return adapter instanceof _UsenetStreamer.default || adapter === _UsenetStreamer.default;
+};
 
 function buildSorts(adapters) {
   return adapters.map(({
@@ -60,7 +62,7 @@ function buildSorts(adapters) {
 
 function buildCatalogs(adapters) {
   return adapters.reduce((catalogs, Adapter) => {
-    if (Adapter === _UsenetStreamer.default) {
+    if (isUsenetAdapter(Adapter)) {
       return catalogs;
     }
 
