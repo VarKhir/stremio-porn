@@ -51,7 +51,7 @@ Watch porn videos and webcam streams from ${availableSites}\
   sorts: PornClient.getSorts(clientOptions),
   catalogs: PornClient.getCatalogs(clientOptions),
   resources: ['stream', 'meta', 'catalog'],
-  idPrefixes: ['tt', 'tmdb', 'tvdb', 'nzbdav'],
+  idPrefixes: PornClient.getIdPrefixes(clientOptions),
   // The docs mention `contactEmail`, but the template uses `email`
   email: EMAIL,
   contactEmail: EMAIL,

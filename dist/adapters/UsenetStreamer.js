@@ -18,7 +18,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 class UsenetStreamer extends _BaseAdapter.default {
   constructor(httpClient, options = {}) {
     super(httpClient);
-    this.baseUrl = options.baseUrl && options.baseUrl.replace(/\/+$/, '');
+    this.baseUrl = options.baseUrl ? options.baseUrl.replace(/\/+$/, '') : '';
   }
 
   supportsId(id) {

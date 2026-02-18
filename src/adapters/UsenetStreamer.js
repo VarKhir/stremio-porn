@@ -8,7 +8,7 @@ class UsenetStreamer extends BaseAdapter {
 
   constructor(httpClient, options = {}) {
     super(httpClient)
-    this.baseUrl = options.baseUrl && options.baseUrl.replace(/\/+$/, '')
+    this.baseUrl = options.baseUrl ? options.baseUrl.replace(/\/+$/, '') : ''
   }
 
   supportsId(id) {

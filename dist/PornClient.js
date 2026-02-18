@@ -76,7 +76,7 @@ function buildCatalogs(adapters) {
           isRequired: false
         }, {
           name: 'sort',
-          options: buildSorts([Adapter]).map(s => s.prop)
+          options: [`${SORT_PROP_PREFIX}${Adapter.name}`]
         }]
       });
     });
@@ -207,6 +207,16 @@ class PornClient {
 
   static getCatalogs(options = {}) {
     return buildCatalogs(this.getAdapters(options));
+  }
+
+  static getIdPrefixes(options = {}) {
+    let prefixes = [];
+
+    if (options.usenetStreamerBase) {
+      prefixes.push('tt', 'tmdb', 'tvdb', 'nzbdav');
+    }
+
+    return prefixes;
   }
 
   constructor(options) {
