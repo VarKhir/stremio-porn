@@ -11,6 +11,8 @@ var _cacheManagerRedisStore = _interopRequireDefault(require("cache-manager-redi
 
 var _HttpClient = _interopRequireDefault(require("./HttpClient"));
 
+var _DebridClient = _interopRequireDefault(require("./DebridClient"));
+
 var _PornHub = _interopRequireDefault(require("./adapters/PornHub"));
 
 var _RedTube = _interopRequireDefault(require("./adapters/RedTube"));
@@ -81,7 +83,8 @@ function buildCatalogs(adapters) {
         }, {
           name: 'sort',
           options: [`${SORT_PROP_PREFIX}${Adapter.name}`]
-        }]
+        }],
+        extraSupported: ['search', 'skip', 'genre', 'sort']
       });
     });
     return catalogs;
@@ -225,6 +228,11 @@ class PornClient {
 
   constructor(options) {
     let httpClient = new _HttpClient.default(options);
+    this.debridClient = new _DebridClient.default(httpClient, {
+      realDebridToken: options.realDebridToken,
+      torboxToken: options.torboxToken,
+      torboxEndpoint: options.torboxEndpoint
+    });
     this.adapterClasses = PornClient.getAdapters(options);
     this.adapters = this.adapterClasses.map(Adapter => {
       let adapterOptions = {};
@@ -287,8 +295,15 @@ class PornClient {
   }
 
   _invokeAdapterMethod(adapter, method, request, idProp) {
+    var _this = this;
+
     return _asyncToGenerator(function* () {
       let results = yield adapter[method](request);
+
+      if (adapterMethod === 'getStreams') {
+        results = yield _this.debridClient.unrestrictStreams(results);
+      }
+
       return results.map(result => {
         return normalizeResult(adapter, result, idProp);
       });
@@ -297,12 +312,12 @@ class PornClient {
 
 
   _invokeMethod(adapterMethod, rawRequest, idProp) {
-    var _this = this;
+    var _this2 = this;
 
     return _asyncToGenerator(function* () {
       let request = normalizeRequest(rawRequest);
 
-      let adapters = _this._getAdaptersForRequest(request, adapterMethod);
+      let adapters = _this2._getAdaptersForRequest(request, adapterMethod);
 
       if (!adapters.length) {
         throw new Error('Couldn\'t find suitable adapters for a request');
@@ -311,7 +326,7 @@ class PornClient {
       let results = [];
 
       for (let adapter of adapters) {
-        let adapterResults = yield _this._invokeAdapterMethod(adapter, adapterMethod, request, idProp);
+        let adapterResults = yield _this2._invokeAdapterMethod(adapter, adapterMethod, request, idProp);
         results.push(adapterResults);
       }
 
@@ -322,7 +337,7 @@ class PornClient {
 
 
   invokeMethod(methodName, rawRequest) {
-    var _this2 = this;
+    var _this3 = this;
 
     return _asyncToGenerator(function* () {
       let {
@@ -336,7 +351,7 @@ class PornClient {
       /*#__PURE__*/
       function () {
         var _ref = _asyncToGenerator(function* () {
-          let result = yield _this2._invokeMethod(adapterMethod, rawRequest, idProp);
+          let result = yield _this3._invokeMethod(adapterMethod, rawRequest, idProp);
           result = expectsArray ? result : result[0];
           return result;
         });
@@ -346,12 +361,12 @@ class PornClient {
         };
       }();
 
-      if (_this2.cache) {
+      if (_this3.cache) {
         let cacheKey = CACHE_PREFIX + JSON.stringify(rawRequest);
         let cacheOptions = {
           ttl: cacheTtl
         };
-        return _this2.cache.wrap(cacheKey, invokeMethod, cacheOptions);
+        return _this3.cache.wrap(cacheKey, invokeMethod, cacheOptions);
       } else {
         return invokeMethod();
       }
