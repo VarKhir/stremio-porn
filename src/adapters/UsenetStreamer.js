@@ -5,6 +5,7 @@ class UsenetStreamer extends BaseAdapter {
   static DISPLAY_NAME = 'Usenet'
   static SUPPORTED_TYPES = ['movie', 'tv']
   static CATALOG_ID = 'usenet'
+  static ID_PREFIXES = ['tt', 'tmdb', 'tvdb', 'nzbdav']
 
   constructor(httpClient, options = {}) {
     super(httpClient)
@@ -16,7 +17,12 @@ class UsenetStreamer extends BaseAdapter {
       return false
     }
 
-    return /^(tt\d+|tmdb:|tvdb:|nzbdav:)/i.test(id)
+    let escapedPrefixes = this.constructor.ID_PREFIXES.map((prefix) => {
+      return prefix.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+    })
+
+    let regex = new RegExp(`^(${escapedPrefixes.join('|')})(:)?`, 'i')
+    return regex.test(id)
   }
 
   _normalizeStream(stream) {

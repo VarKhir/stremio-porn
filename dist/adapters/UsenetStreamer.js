@@ -26,7 +26,11 @@ class UsenetStreamer extends _BaseAdapter.default {
       return false;
     }
 
-    return /^(tt\d+|tmdb:|tvdb:|nzbdav:)/i.test(id);
+    let escapedPrefixes = this.constructor.ID_PREFIXES.map(prefix => {
+      return prefix.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    });
+    let regex = new RegExp(`^(${escapedPrefixes.join('|')})(:)?`, 'i');
+    return regex.test(id);
   }
 
   _normalizeStream(stream) {
@@ -79,7 +83,7 @@ class UsenetStreamer extends _BaseAdapter.default {
 
 }
 
-_defineProperty(_defineProperty(_defineProperty(UsenetStreamer, "DISPLAY_NAME", 'Usenet'), "SUPPORTED_TYPES", ['movie', 'tv']), "CATALOG_ID", 'usenet');
+_defineProperty(_defineProperty(_defineProperty(_defineProperty(UsenetStreamer, "DISPLAY_NAME", 'Usenet'), "SUPPORTED_TYPES", ['movie', 'tv']), "CATALOG_ID", 'usenet'), "ID_PREFIXES", ['tt', 'tmdb', 'tvdb', 'nzbdav']);
 
 var _default = UsenetStreamer;
 exports.default = _default;

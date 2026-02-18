@@ -21,9 +21,10 @@ const CACHE_PREFIX = 'stremio-porn|'
 // so we only support 1 adapter per request for now.
 const MAX_ADAPTERS_PER_REQUEST = 1
 const BASE_ADAPTERS = [PornHub, RedTube, YouPorn, SpankWire, PornCom, Chaturbate]
-const isUsenetAdapter = (adapter) => {
+const isUsenetAdapterOrClass = (adapter) => {
   return adapter instanceof UsenetStreamer || adapter === UsenetStreamer
 }
+const isUsenetAdapter = (adapter) => adapter instanceof UsenetStreamer
 function buildSorts(adapters) {
   return adapters.map(({ name, DISPLAY_NAME, SUPPORTED_TYPES }) => ({
     name: `Porn: ${DISPLAY_NAME}`,
@@ -34,7 +35,7 @@ function buildSorts(adapters) {
 
 function buildCatalogs(adapters) {
   return adapters.reduce((catalogs, Adapter) => {
-    if (isUsenetAdapter(Adapter)) {
+    if (isUsenetAdapterOrClass(Adapter)) {
       return catalogs
     }
 
@@ -177,7 +178,7 @@ class PornClient {
     let prefixes = []
 
     if (options.usenetStreamerUrl) {
-      prefixes.push('tt', 'tmdb', 'tvdb', 'nzbdav')
+      prefixes.push(...UsenetStreamer.ID_PREFIXES)
     }
 
     return prefixes
