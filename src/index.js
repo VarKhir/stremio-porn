@@ -38,7 +38,9 @@ function parseUserConfig(configStr) {
   }
 
   try {
-    let decoded = Buffer.from(configStr, 'base64').toString('utf8')
+    // Convert URL-safe base64 back to standard base64
+    let standard = configStr.replace(/-/g, '+').replace(/_/g, '/')
+    let decoded = Buffer.from(standard, 'base64').toString('utf8')
     let config = JSON.parse(decoded)
     return config || {}
   } catch (err) {
@@ -125,6 +127,8 @@ let defaultAddon = new Stremio.Server(defaultMethods, MANIFEST)
 
 // Cache for per-user PornClient instances (keyed by config string)
 let userClients = {}
+let userClientKeys = []
+const MAX_USER_CLIENTS = 100
 
 function getClientForConfig(configStr) {
   if (!configStr) {
@@ -149,12 +153,23 @@ function getClientForConfig(configStr) {
 
   let client = new PornClient(clientOptions)
   userClients[configStr] = client
+  userClientKeys.push(configStr)
+
+  // Evict oldest entries when cache exceeds limit
+  while (userClientKeys.length > MAX_USER_CLIENTS) {
+    let oldKey = userClientKeys.shift()
+    delete userClients[oldKey]
+  }
+
   return client
 }
 
 let server = http.createServer((req, res) => {
   // Handle user-configured addon routes: /<base64config>/stremioget/stremio/v1
-  let configMatch = req.url.match(/^\/([A-Za-z0-9+/=]+?)\/stremioget\//)
+  // Uses URL-safe base64 (- and _ instead of + and /)
+  let configMatch = req.url.match(
+    /^\/([A-Za-z0-9_-]+=*)\/stremioget\//
+  )
   let configStr = configMatch ? configMatch[1] : null
 
   if (configStr) {

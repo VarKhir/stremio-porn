@@ -493,7 +493,8 @@
 
       var configStr = '';
       if (Object.keys(config).length > 0) {
-        configStr = btoa(JSON.stringify(config));
+        configStr = btoa(JSON.stringify(config))
+          .replace(/\+/g, '-').replace(/\//g, '_');
       }
 
       updateInstallUrlDisplay(configStr, window._endpoint, window._manifestPath);
