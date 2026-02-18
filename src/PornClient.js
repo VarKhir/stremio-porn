@@ -1,6 +1,7 @@
 import cacheManager from 'cache-manager'
 import redisStore from 'cache-manager-redis-store'
 import HttpClient from './HttpClient'
+import DebridClient from './DebridClient'
 import PornHub from './adapters/PornHub'
 import RedTube from './adapters/RedTube'
 import YouPorn from './adapters/YouPorn'
@@ -55,6 +56,7 @@ function buildCatalogs(adapters) {
           name: 'sort',
           options: [`${SORT_PROP_PREFIX}${Adapter.name}`],
         }],
+        extraSupported: ['search', 'skip', 'genre', 'sort'],
       })
     })
 
@@ -186,6 +188,10 @@ class PornClient {
 
   constructor(options) {
     let httpClient = new HttpClient(options)
+    this.debridClient = new DebridClient(httpClient, {
+      realDebridToken: options.realDebridToken,
+      torboxToken: options.torboxToken,
+    })
     this.adapterClasses = PornClient.getAdapters(options)
     this.adapters = this.adapterClasses.map((Adapter) => {
       let adapterOptions = {}
@@ -243,6 +249,9 @@ class PornClient {
 
   async _invokeAdapterMethod(adapter, method, request, idProp) {
     let results = await adapter[method](request)
+    if (method === 'getStreams') {
+      results = await this.debridClient.unrestrictStreams(results)
+    }
     return results.map((result) => {
       return normalizeResult(adapter, result, idProp)
     })

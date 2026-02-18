@@ -19,6 +19,8 @@ const PROXY = process.env.STREMIO_PORN_PROXY || process.env.HTTPS_PROXY
 const CACHE = process.env.STREMIO_PORN_CACHE || process.env.REDIS_URL || '1'
 const EMAIL = process.env.STREMIO_PORN_EMAIL || process.env.EMAIL
 const USENET_STREAMER = process.env.STREMIO_PORN_USENET_STREAMER
+const REAL_DEBRID_TOKEN = process.env.STREMIO_PORN_REAL_DEBRID_TOKEN
+const TORBOX_TOKEN = process.env.STREMIO_PORN_TORBOX_TOKEN
 const IS_PROD = process.env.NODE_ENV === 'production'
 
 
@@ -32,7 +34,13 @@ if (IS_PROD && ID === DEFAULT_ID) {
   process.exit(1)
 }
 
-let clientOptions = { proxy: PROXY, cache: CACHE, usenetStreamerUrl: USENET_STREAMER }
+let clientOptions = {
+  proxy: PROXY,
+  cache: CACHE,
+  usenetStreamerUrl: USENET_STREAMER,
+  realDebridToken: REAL_DEBRID_TOKEN,
+  torboxToken: TORBOX_TOKEN,
+}
 let adapters = PornClient.getAdapters(clientOptions)
 let availableSites = adapters.map((a) => a.DISPLAY_NAME).join(', ')
 
