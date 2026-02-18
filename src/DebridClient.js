@@ -4,6 +4,7 @@ class DebridClient {
     this.realDebridToken = options.realDebridToken
     this.torboxToken = options.torboxToken
     this.torboxEndpoint = 'https://api.torbox.app/v1/links/instant'
+    this.torboxCacheEndpoint = 'https://api.torbox.app/v1/api/webdl/checkcached'
   }
 
   get isEnabled() {
@@ -41,6 +42,31 @@ class DebridClient {
     return null
   }
 
+  async _checkTorboxCache(url) {
+    if (!this.torboxToken || !url) {
+      return null
+    }
+
+    try {
+      let encoded = encodeURIComponent(url)
+      let checkUrl = `${this.torboxCacheEndpoint}?url=${encoded}`
+      let { body } = await this.httpClient.request(checkUrl, {
+        headers: {
+          Authorization: `Bearer ${this.torboxToken}`,
+        },
+        json: true,
+      })
+
+      if (body && body.data && body.data.cached === true) {
+        return true
+      }
+
+      return false
+    } catch (err) {
+      return null
+    }
+  }
+
   async _unrestrictWithRealDebrid(url) {
     if (!this.realDebridToken) {
       return null
@@ -71,6 +97,12 @@ class DebridClient {
     }
 
     try {
+      let isCached = await this._checkTorboxCache(url)
+
+      if (isCached === false) {
+        return null
+      }
+
       let { body } = await this.httpClient.request(this.torboxEndpoint, {
         method: 'POST',
         headers: {

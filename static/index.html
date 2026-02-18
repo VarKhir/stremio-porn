@@ -252,6 +252,72 @@
       background: #3a3a6a;
     }
 
+    .debrid-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .debrid-form .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .debrid-form label {
+      font-size: 0.9rem;
+      color: #b0b0c0;
+      font-weight: 600;
+    }
+
+    .debrid-form .field-hint {
+      font-size: 0.8rem;
+      color: #6a6a8a;
+    }
+
+    .debrid-form input[type="text"],
+    .debrid-form input[type="password"] {
+      background: #1a1a3a;
+      border: 1px solid #2a2a5a;
+      color: #e0e0ff;
+      padding: 0.6rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: monospace;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+
+    .debrid-form input[type="text"]:focus,
+    .debrid-form input[type="password"]:focus {
+      border-color: #e94560;
+      outline: none;
+    }
+
+    .debrid-form .update-btn {
+      background: #e94560;
+      color: #fff;
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      align-self: flex-start;
+    }
+
+    .debrid-form .update-btn:hover {
+      background: #c73852;
+    }
+
+    .debrid-notice {
+      font-size: 0.85rem;
+      color: #8888aa;
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+
     @media (max-width: 600px) {
       .hero h1 { font-size: 1.5rem; }
       .catalogs-grid { grid-template-columns: 1fr; }
@@ -273,6 +339,24 @@
   </div>
 
   <div class="container">
+    <div class="section">
+      <h2><span class="icon">🔑</span> Debrid Services</h2>
+      <p class="debrid-notice">Configure your debrid service API tokens below. When you click "Update Install URL", a personalized addon URL will be generated with your tokens encoded in it. Your tokens are only sent to this addon server, never to third parties. Torbox links are checked for cache availability before unrestricting.</p>
+      <div class="debrid-form" style="margin-top: 1rem;">
+        <div class="field">
+          <label for="realDebridToken">Real-Debrid API Token</label>
+          <span class="field-hint">Get your token from <a href="https://real-debrid.com/apitoken" target="_blank" rel="noopener" style="color:#e94560;">real-debrid.com/apitoken</a></span>
+          <input type="password" id="realDebridToken" placeholder="Enter your Real-Debrid API token (optional)">
+        </div>
+        <div class="field">
+          <label for="torboxToken">Torbox API Token</label>
+          <span class="field-hint">Get your token from <a href="https://torbox.app/settings" target="_blank" rel="noopener" style="color:#e94560;">torbox.app/settings</a></span>
+          <input type="password" id="torboxToken" placeholder="Enter your Torbox API token (optional)">
+        </div>
+        <button class="update-btn" onclick="updateInstallUrl()">Update Install URL</button>
+      </div>
+    </div>
+
     <div class="section">
       <h2><span class="icon">📊</span> Status</h2>
       <div class="status-grid" id="statusGrid">
@@ -301,7 +385,7 @@
     </div>
 
     <div class="section">
-      <h2><span class="icon">⚙️</span> Configuration</h2>
+      <h2><span class="icon">⚙️</span> Server Configuration (Environment Variables)</h2>
       <table class="config-table">
         <tr><th><code>NODE_ENV</code></th><td>Set to <code>production</code> for public use</td></tr>
         <tr><th><code>STREMIO_PORN_ID</code></th><td>Addon identifier (must be non-default in production)</td></tr>
@@ -311,8 +395,6 @@
         <tr><th><code>STREMIO_PORN_PROXY</code></th><td>HTTPS proxy address for outbound requests</td></tr>
         <tr><th><code>STREMIO_PORN_EMAIL</code></th><td>Contact email address</td></tr>
         <tr><th><code>STREMIO_PORN_USENET_STREAMER</code></th><td>Base URL to a compatible Usenet streaming addon</td></tr>
-        <tr><th><code>STREMIO_PORN_REAL_DEBRID_TOKEN</code></th><td>Real-Debrid API token for unrestricting stream URLs</td></tr>
-        <tr><th><code>STREMIO_PORN_TORBOX_TOKEN</code></th><td>Torbox API token for unrestricting stream URLs</td></tr>
       </table>
     </div>
   </div>
@@ -326,11 +408,11 @@
     (function() {
       var endpoint = window.location.origin;
       var manifestPath = '/stremioget/stremio/v1';
-      var manifestUrl = endpoint + manifestPath;
-      var stremioUrl = 'stremio://' + window.location.host + manifestPath;
 
-      document.getElementById('manifestUrl').value = manifestUrl;
-      document.getElementById('installBtn').href = stremioUrl;
+      window._endpoint = endpoint;
+      window._manifestPath = manifestPath;
+
+      updateInstallUrlDisplay('', endpoint, manifestPath);
 
       fetch('/api/status')
         .then(function(res) { return res.json(); })
@@ -391,6 +473,31 @@
         return div.innerHTML;
       }
     })();
+
+    function updateInstallUrlDisplay(configStr, endpoint, manifestPath) {
+      var prefix = configStr ? '/' + configStr : '';
+      var manifestUrl = endpoint + prefix + manifestPath;
+      var stremioUrl = 'stremio://' + window.location.host + prefix + manifestPath;
+
+      document.getElementById('manifestUrl').value = manifestUrl;
+      document.getElementById('installBtn').href = stremioUrl;
+    }
+
+    function updateInstallUrl() {
+      var rdToken = document.getElementById('realDebridToken').value.trim();
+      var tbToken = document.getElementById('torboxToken').value.trim();
+
+      var config = {};
+      if (rdToken) config.realDebridToken = rdToken;
+      if (tbToken) config.torboxToken = tbToken;
+
+      var configStr = '';
+      if (Object.keys(config).length > 0) {
+        configStr = btoa(JSON.stringify(config));
+      }
+
+      updateInstallUrlDisplay(configStr, window._endpoint, window._manifestPath);
+    }
 
     function copyManifest() {
       var input = document.getElementById('manifestUrl');

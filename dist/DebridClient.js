@@ -17,6 +17,7 @@ class DebridClient {
     this.realDebridToken = options.realDebridToken;
     this.torboxToken = options.torboxToken;
     this.torboxEndpoint = 'https://api.torbox.app/v1/links/instant';
+    this.torboxCacheEndpoint = 'https://api.torbox.app/v1/api/webdl/checkcached';
   }
 
   get isEnabled() {
@@ -51,54 +52,56 @@ class DebridClient {
     return null;
   }
 
-  _unrestrictWithRealDebrid(url) {
+  _checkTorboxCache(url) {
     var _this = this;
 
     return _asyncToGenerator(function* () {
-      if (!_this.realDebridToken) {
+      if (!_this.torboxToken || !url) {
         return null;
       }
 
       try {
+        let encoded = encodeURIComponent(url);
+        let checkUrl = `${_this.torboxCacheEndpoint}?url=${encoded}`;
         let {
           body
-        } = yield _this.httpClient.request('https://api.real-debrid.com/rest/1.0/unrestrict/link', {
-          method: 'POST',
+        } = yield _this.httpClient.request(checkUrl, {
           headers: {
-            Authorization: `Bearer ${_this.realDebridToken}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
+            Authorization: `Bearer ${_this.torboxToken}`
           },
-          body: _this._encodeForm({
-            link: url
-          }),
           json: true
         });
-        return _this._pickUrl(body);
+
+        if (body && body.data && body.data.cached === true) {
+          return true;
+        }
+
+        return false;
       } catch (err) {
         return null;
       }
     })();
   }
 
-  _unrestrictWithTorbox(url) {
+  _unrestrictWithRealDebrid(url) {
     var _this2 = this;
 
     return _asyncToGenerator(function* () {
-      if (!_this2.torboxToken) {
+      if (!_this2.realDebridToken) {
         return null;
       }
 
       try {
         let {
           body
-        } = yield _this2.httpClient.request(_this2.torboxEndpoint, {
+        } = yield _this2.httpClient.request('https://api.real-debrid.com/rest/1.0/unrestrict/link', {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${_this2.torboxToken}`,
+            Authorization: `Bearer ${_this2.realDebridToken}`,
             'Content-Type': 'application/x-www-form-urlencoded'
           },
           body: _this2._encodeForm({
-            url
+            link: url
           }),
           json: true
         });
@@ -109,29 +112,64 @@ class DebridClient {
     })();
   }
 
-  _unrestrict(url) {
+  _unrestrictWithTorbox(url) {
     var _this3 = this;
 
     return _asyncToGenerator(function* () {
-      if (!url || !_this3.isEnabled) {
+      if (!_this3.torboxToken) {
         return null;
       }
 
-      let directUrl = yield _this3._unrestrictWithRealDebrid(url);
+      try {
+        let isCached = yield _this3._checkTorboxCache(url);
+
+        if (isCached === false) {
+          return null;
+        }
+
+        let {
+          body
+        } = yield _this3.httpClient.request(_this3.torboxEndpoint, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${_this3.torboxToken}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: _this3._encodeForm({
+            url
+          }),
+          json: true
+        });
+        return _this3._pickUrl(body);
+      } catch (err) {
+        return null;
+      }
+    })();
+  }
+
+  _unrestrict(url) {
+    var _this4 = this;
+
+    return _asyncToGenerator(function* () {
+      if (!url || !_this4.isEnabled) {
+        return null;
+      }
+
+      let directUrl = yield _this4._unrestrictWithRealDebrid(url);
 
       if (directUrl) {
         return directUrl;
       }
 
-      return _this3._unrestrictWithTorbox(url);
+      return _this4._unrestrictWithTorbox(url);
     })();
   }
 
   unrestrictStreams(streams) {
-    var _this4 = this;
+    var _this5 = this;
 
     return _asyncToGenerator(function* () {
-      if (!Array.isArray(streams) || !_this4.isEnabled) {
+      if (!Array.isArray(streams) || !_this5.isEnabled) {
         return streams || [];
       }
 
@@ -143,7 +181,7 @@ class DebridClient {
             return stream;
           }
 
-          let unrestrictedUrl = yield _this4._unrestrict(stream.url);
+          let unrestrictedUrl = yield _this5._unrestrict(stream.url);
 
           if (unrestrictedUrl && unrestrictedUrl !== stream.url) {
             return _objectSpread({}, stream, {

@@ -19,6 +19,10 @@ var _PornClient = _interopRequireDefault(require("./PornClient"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } } function _next(value) { step("next", value); } function _throw(err) { step("throw", err); } _next(); }); }; }
 
 const SUPPORTED_METHODS = ['stream.find', 'meta.find', 'meta.search', 'meta.get'];
@@ -31,8 +35,6 @@ const PROXY = process.env.STREMIO_PORN_PROXY || process.env.HTTPS_PROXY;
 const CACHE = process.env.STREMIO_PORN_CACHE || process.env.REDIS_URL || '1';
 const EMAIL = process.env.STREMIO_PORN_EMAIL || process.env.EMAIL;
 const USENET_STREAMER = process.env.STREMIO_PORN_USENET_STREAMER;
-const REAL_DEBRID_TOKEN = process.env.STREMIO_PORN_REAL_DEBRID_TOKEN;
-const TORBOX_TOKEN = process.env.STREMIO_PORN_TORBOX_TOKEN;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 if (IS_PROD && ID === DEFAULT_ID) {
@@ -41,15 +43,27 @@ if (IS_PROD && ID === DEFAULT_ID) {
   process.exit(1);
 }
 
-let clientOptions = {
+function parseUserConfig(configStr) {
+  if (!configStr) {
+    return {};
+  }
+
+  try {
+    let decoded = Buffer.from(configStr, 'base64').toString('utf8');
+    let config = JSON.parse(decoded);
+    return config || {};
+  } catch (err) {
+    return {};
+  }
+}
+
+let baseClientOptions = {
   proxy: PROXY,
   cache: CACHE,
-  usenetStreamerUrl: USENET_STREAMER,
-  realDebridToken: REAL_DEBRID_TOKEN,
-  torboxToken: TORBOX_TOKEN
+  usenetStreamerUrl: USENET_STREAMER
 };
 
-let adapters = _PornClient.default.getAdapters(clientOptions);
+let adapters = _PornClient.default.getAdapters(baseClientOptions);
 
 let availableSites = adapters.map(a => a.DISPLAY_NAME).join(', ');
 const MANIFEST = {
@@ -63,11 +77,11 @@ Watch porn videos and webcam streams from ${availableSites}\
   types: ['movie', 'tv'],
   idProperty: _PornClient.default.ID,
   dontAnnounce: !IS_PROD,
-  sorts: _PornClient.default.getSorts(clientOptions, adapters),
-  catalogs: _PornClient.default.getCatalogs(clientOptions, adapters),
+  sorts: _PornClient.default.getSorts(baseClientOptions, adapters),
+  catalogs: _PornClient.default.getCatalogs(baseClientOptions, adapters),
   resources: ['stream', 'meta', 'catalog'],
   // Stremio manifest allows advertising supported external id prefixes for stream requests
-  idPrefixes: _PornClient.default.getIdPrefixes(clientOptions, adapters),
+  idPrefixes: _PornClient.default.getIdPrefixes(baseClientOptions, adapters),
   // The docs mention `contactEmail`, but the template uses `email`
   email: EMAIL,
   contactEmail: EMAIL,
@@ -124,11 +138,58 @@ function makeMethods(client, methodNames) {
   }, {});
 }
 
-let client = new _PornClient.default(clientOptions);
-let methods = makeMethods(client, SUPPORTED_METHODS);
-let addon = new _stremioAddons.default.Server(methods, MANIFEST);
+let defaultClient = new _PornClient.default(baseClientOptions);
+let defaultMethods = makeMethods(defaultClient, SUPPORTED_METHODS);
+let defaultAddon = new _stremioAddons.default.Server(defaultMethods, MANIFEST); // Cache for per-user PornClient instances (keyed by config string)
+
+let userClients = {};
+
+function getClientForConfig(configStr) {
+  if (!configStr) {
+    return defaultClient;
+  }
+
+  if (userClients[configStr]) {
+    return userClients[configStr];
+  }
+
+  let userConfig = parseUserConfig(configStr);
+
+  if (!userConfig.realDebridToken && !userConfig.torboxToken) {
+    return defaultClient;
+  }
+
+  let clientOptions = _objectSpread({}, baseClientOptions, {
+    realDebridToken: userConfig.realDebridToken,
+    torboxToken: userConfig.torboxToken
+  });
+
+  let client = new _PornClient.default(clientOptions);
+  userClients[configStr] = client;
+  return client;
+}
 
 let server = _http.default.createServer((req, res) => {
+  // Handle user-configured addon routes: /<base64config>/stremioget/stremio/v1
+  let configMatch = req.url.match(/^\/([A-Za-z0-9+/=]+?)\/stremioget\//);
+  let configStr = configMatch ? configMatch[1] : null;
+
+  if (configStr) {
+    let client = getClientForConfig(configStr);
+    let methods = makeMethods(client, SUPPORTED_METHODS);
+
+    let configuredManifest = _objectSpread({}, MANIFEST, {
+      endpoint: `${ENDPOINT}/${configStr}/stremioget/stremio/v1`
+    });
+
+    let configuredAddon = new _stremioAddons.default.Server(methods, configuredManifest); // Rewrite URL to remove the config prefix
+    // so the Stremio server can handle it
+
+    req.url = req.url.slice(configStr.length + 1);
+    configuredAddon.middleware(req, res, () => res.end());
+    return;
+  }
+
   if (req.url === '/api/status') {
     let status = {
       manifest: {
@@ -151,7 +212,7 @@ let server = _http.default.createServer((req, res) => {
   }
 
   (0, _serveStatic.default)(STATIC_DIR)(req, res, () => {
-    addon.middleware(req, res, () => res.end());
+    defaultAddon.middleware(req, res, () => res.end());
   });
 });
 

@@ -19,8 +19,6 @@ const PROXY = process.env.STREMIO_PORN_PROXY || process.env.HTTPS_PROXY
 const CACHE = process.env.STREMIO_PORN_CACHE || process.env.REDIS_URL || '1'
 const EMAIL = process.env.STREMIO_PORN_EMAIL || process.env.EMAIL
 const USENET_STREAMER = process.env.STREMIO_PORN_USENET_STREAMER
-const REAL_DEBRID_TOKEN = process.env.STREMIO_PORN_REAL_DEBRID_TOKEN
-const TORBOX_TOKEN = process.env.STREMIO_PORN_TORBOX_TOKEN
 const IS_PROD = process.env.NODE_ENV === 'production'
 
 
@@ -34,14 +32,26 @@ if (IS_PROD && ID === DEFAULT_ID) {
   process.exit(1)
 }
 
-let clientOptions = {
+function parseUserConfig(configStr) {
+  if (!configStr) {
+    return {}
+  }
+
+  try {
+    let decoded = Buffer.from(configStr, 'base64').toString('utf8')
+    let config = JSON.parse(decoded)
+    return config || {}
+  } catch (err) {
+    return {}
+  }
+}
+
+let baseClientOptions = {
   proxy: PROXY,
   cache: CACHE,
   usenetStreamerUrl: USENET_STREAMER,
-  realDebridToken: REAL_DEBRID_TOKEN,
-  torboxToken: TORBOX_TOKEN,
 }
-let adapters = PornClient.getAdapters(clientOptions)
+let adapters = PornClient.getAdapters(baseClientOptions)
 let availableSites = adapters.map((a) => a.DISPLAY_NAME).join(', ')
 
 const MANIFEST = {
@@ -55,11 +65,11 @@ Watch porn videos and webcam streams from ${availableSites}\
   types: ['movie', 'tv'],
   idProperty: PornClient.ID,
   dontAnnounce: !IS_PROD,
-  sorts: PornClient.getSorts(clientOptions, adapters),
-  catalogs: PornClient.getCatalogs(clientOptions, adapters),
+  sorts: PornClient.getSorts(baseClientOptions, adapters),
+  catalogs: PornClient.getCatalogs(baseClientOptions, adapters),
   resources: ['stream', 'meta', 'catalog'],
   // Stremio manifest allows advertising supported external id prefixes for stream requests
-  idPrefixes: PornClient.getIdPrefixes(clientOptions, adapters),
+  idPrefixes: PornClient.getIdPrefixes(baseClientOptions, adapters),
   // The docs mention `contactEmail`, but the template uses `email`
   email: EMAIL,
   contactEmail: EMAIL,
@@ -109,10 +119,59 @@ function makeMethods(client, methodNames) {
 }
 
 
-let client = new PornClient(clientOptions)
-let methods = makeMethods(client, SUPPORTED_METHODS)
-let addon = new Stremio.Server(methods, MANIFEST)
+let defaultClient = new PornClient(baseClientOptions)
+let defaultMethods = makeMethods(defaultClient, SUPPORTED_METHODS)
+let defaultAddon = new Stremio.Server(defaultMethods, MANIFEST)
+
+// Cache for per-user PornClient instances (keyed by config string)
+let userClients = {}
+
+function getClientForConfig(configStr) {
+  if (!configStr) {
+    return defaultClient
+  }
+
+  if (userClients[configStr]) {
+    return userClients[configStr]
+  }
+
+  let userConfig = parseUserConfig(configStr)
+
+  if (!userConfig.realDebridToken && !userConfig.torboxToken) {
+    return defaultClient
+  }
+
+  let clientOptions = {
+    ...baseClientOptions,
+    realDebridToken: userConfig.realDebridToken,
+    torboxToken: userConfig.torboxToken,
+  }
+
+  let client = new PornClient(clientOptions)
+  userClients[configStr] = client
+  return client
+}
+
 let server = http.createServer((req, res) => {
+  // Handle user-configured addon routes: /<base64config>/stremioget/stremio/v1
+  let configMatch = req.url.match(/^\/([A-Za-z0-9+/=]+?)\/stremioget\//)
+  let configStr = configMatch ? configMatch[1] : null
+
+  if (configStr) {
+    let client = getClientForConfig(configStr)
+    let methods = makeMethods(client, SUPPORTED_METHODS)
+    let configuredManifest = {
+      ...MANIFEST,
+      endpoint: `${ENDPOINT}/${configStr}/stremioget/stremio/v1`,
+    }
+    let configuredAddon = new Stremio.Server(methods, configuredManifest)
+    // Rewrite URL to remove the config prefix
+    // so the Stremio server can handle it
+    req.url = req.url.slice(configStr.length + 1)
+    configuredAddon.middleware(req, res, () => res.end())
+    return
+  }
+
   if (req.url === '/api/status') {
     let status = {
       manifest: {
@@ -132,7 +191,7 @@ let server = http.createServer((req, res) => {
     return
   }
   serveStatic(STATIC_DIR)(req, res, () => {
-    addon.middleware(req, res, () => res.end())
+    defaultAddon.middleware(req, res, () => res.end())
   })
 })
 
