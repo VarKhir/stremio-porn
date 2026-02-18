@@ -44,11 +44,9 @@ const CACHE_PREFIX = 'stremio-porn|'; // Making multiple requests to multiple ad
 const MAX_ADAPTERS_PER_REQUEST = 1;
 const BASE_ADAPTERS = [_PornHub.default, _RedTube.default, _YouPorn.default, _SpankWire.default, _PornCom.default, _Chaturbate.default];
 
-const isUsenetAdapterOrClass = adapter => {
-  return adapter instanceof _UsenetStreamer.default || adapter === _UsenetStreamer.default;
+const isUsenetAdapter = (adapter, includeClass = false) => {
+  return adapter instanceof _UsenetStreamer.default || includeClass && adapter === _UsenetStreamer.default;
 };
-
-const isUsenetAdapter = adapter => adapter instanceof _UsenetStreamer.default;
 
 function buildSorts(adapters) {
   return adapters.map(({
@@ -64,7 +62,7 @@ function buildSorts(adapters) {
 
 function buildCatalogs(adapters) {
   return adapters.reduce((catalogs, Adapter) => {
-    if (isUsenetAdapterOrClass(Adapter)) {
+    if (isUsenetAdapter(Adapter, true)) {
       return catalogs;
     }
 
@@ -263,10 +261,7 @@ class PornClient {
       type
     } = query;
     let matchingAdapters = this.adapters;
-
-    if (adapterMethod !== 'getStreams') {
-      matchingAdapters = matchingAdapters.filter(adapter => !isUsenetAdapter(adapter));
-    }
+    let usenetAdapters = matchingAdapters.filter(adapter => isUsenetAdapter(adapter));
 
     if (adapters.length) {
       matchingAdapters = matchingAdapters.filter(adapter => {
@@ -280,16 +275,13 @@ class PornClient {
       });
     }
 
-    if (adapterMethod === 'getStreams') {
-      let usenetAdapter = matchingAdapters.find(adapter => {
-        return isUsenetAdapter(adapter) && adapter.supportsId(query.id);
+    if (adapterMethod === 'getStreams' && usenetAdapters.length) {
+      let usenetAdapter = usenetAdapters.find(adapter => adapter.supportsId(query.id));
+      matchingAdapters = usenetAdapter ? [usenetAdapter] : matchingAdapters.filter(adapter => {
+        return !isUsenetAdapter(adapter);
       });
-
-      if (usenetAdapter) {
-        matchingAdapters = [usenetAdapter];
-      } else {
-        matchingAdapters = matchingAdapters.filter(adapter => !isUsenetAdapter(adapter));
-      }
+    } else {
+      matchingAdapters = matchingAdapters.filter(adapter => !isUsenetAdapter(adapter));
     }
 
     return matchingAdapters.slice(0, MAX_ADAPTERS_PER_REQUEST);

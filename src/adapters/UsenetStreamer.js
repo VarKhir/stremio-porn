@@ -1,6 +1,7 @@
 import BaseAdapter from './BaseAdapter'
 
 
+// Stream-only adapter that proxies IMDb/TMDb/TVDB/NZBDav ids to a Usenet streamer
 class UsenetStreamer extends BaseAdapter {
   static DISPLAY_NAME = 'Usenet'
   static SUPPORTED_TYPES = ['movie', 'tv']
