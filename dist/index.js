@@ -129,6 +129,27 @@ let methods = makeMethods(client, SUPPORTED_METHODS);
 let addon = new _stremioAddons.default.Server(methods, MANIFEST);
 
 let server = _http.default.createServer((req, res) => {
+  if (req.url === '/api/status') {
+    let status = {
+      manifest: {
+        name: MANIFEST.name,
+        version: MANIFEST.version,
+        description: MANIFEST.description,
+        catalogs: MANIFEST.catalogs,
+        dontAnnounce: MANIFEST.dontAnnounce
+      },
+      config: {
+        cache: CACHE !== '0',
+        proxy: !!PROXY
+      }
+    };
+    res.writeHead(200, {
+      'Content-Type': 'application/json'
+    });
+    res.end(JSON.stringify(status));
+    return;
+  }
+
   (0, _serveStatic.default)(STATIC_DIR)(req, res, () => {
     addon.middleware(req, res, () => res.end());
   });
