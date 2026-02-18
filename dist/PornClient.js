@@ -44,6 +44,8 @@ const CACHE_PREFIX = 'stremio-porn|'; // Making multiple requests to multiple ad
 const MAX_ADAPTERS_PER_REQUEST = 1;
 const BASE_ADAPTERS = [_PornHub.default, _RedTube.default, _YouPorn.default, _SpankWire.default, _PornCom.default, _Chaturbate.default];
 
+const isUsenetAdapter = adapter => adapter instanceof _UsenetStreamer.default;
+
 function buildSorts(adapters) {
   return adapters.map(({
     name,
@@ -194,7 +196,7 @@ class PornClient {
   static getAdapters(options = {}) {
     let adapters = [...BASE_ADAPTERS];
 
-    if (options.usenetStreamerBase) {
+    if (options.usenetStreamerUrl) {
       adapters.push(_UsenetStreamer.default);
     }
 
@@ -212,7 +214,7 @@ class PornClient {
   static getIdPrefixes(options = {}) {
     let prefixes = [];
 
-    if (options.usenetStreamerBase) {
+    if (options.usenetStreamerUrl) {
       prefixes.push('tt', 'tmdb', 'tvdb', 'nzbdav');
     }
 
@@ -227,7 +229,7 @@ class PornClient {
 
       if (Adapter === _UsenetStreamer.default) {
         adapterOptions = {
-          baseUrl: options.usenetStreamerBase
+          baseUrl: options.usenetStreamerUrl
         };
       }
 
@@ -259,9 +261,7 @@ class PornClient {
     let matchingAdapters = this.adapters;
 
     if (adapterMethod !== 'getStreams') {
-      matchingAdapters = matchingAdapters.filter(adapter => {
-        return !(adapter instanceof _UsenetStreamer.default);
-      });
+      matchingAdapters = matchingAdapters.filter(adapter => !isUsenetAdapter(adapter));
     }
 
     if (adapters.length) {
@@ -278,15 +278,13 @@ class PornClient {
 
     if (adapterMethod === 'getStreams') {
       let usenetAdapter = matchingAdapters.find(adapter => {
-        return adapter instanceof _UsenetStreamer.default && adapter.supportsId(query.id);
+        return isUsenetAdapter(adapter) && adapter.supportsId(query.id);
       });
 
       if (usenetAdapter) {
         matchingAdapters = [usenetAdapter];
       } else {
-        matchingAdapters = matchingAdapters.filter(adapter => {
-          return !(adapter instanceof _UsenetStreamer.default);
-        });
+        matchingAdapters = matchingAdapters.filter(adapter => !isUsenetAdapter(adapter));
       }
     }
 

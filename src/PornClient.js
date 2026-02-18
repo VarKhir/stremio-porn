@@ -21,6 +21,7 @@ const CACHE_PREFIX = 'stremio-porn|'
 // so we only support 1 adapter per request for now.
 const MAX_ADAPTERS_PER_REQUEST = 1
 const BASE_ADAPTERS = [PornHub, RedTube, YouPorn, SpankWire, PornCom, Chaturbate]
+const isUsenetAdapter = (adapter) => adapter instanceof UsenetStreamer
 function buildSorts(adapters) {
   return adapters.map(({ name, DISPLAY_NAME, SUPPORTED_TYPES }) => ({
     name: `Porn: ${DISPLAY_NAME}`,
@@ -155,7 +156,7 @@ class PornClient {
   static getAdapters(options = {}) {
     let adapters = [...BASE_ADAPTERS]
 
-    if (options.usenetStreamerBase) {
+    if (options.usenetStreamerUrl) {
       adapters.push(UsenetStreamer)
     }
 
@@ -173,7 +174,7 @@ class PornClient {
   static getIdPrefixes(options = {}) {
     let prefixes = []
 
-    if (options.usenetStreamerBase) {
+    if (options.usenetStreamerUrl) {
       prefixes.push('tt', 'tmdb', 'tvdb', 'nzbdav')
     }
 
@@ -187,7 +188,7 @@ class PornClient {
       let adapterOptions = {}
 
       if (Adapter === UsenetStreamer) {
-        adapterOptions = { baseUrl: options.usenetStreamerBase }
+        adapterOptions = { baseUrl: options.usenetStreamerUrl }
       }
 
       return new Adapter(httpClient, adapterOptions)
@@ -211,9 +212,7 @@ class PornClient {
     let matchingAdapters = this.adapters
 
     if (adapterMethod !== 'getStreams') {
-      matchingAdapters = matchingAdapters.filter((adapter) => {
-        return !(adapter instanceof UsenetStreamer)
-      })
+      matchingAdapters = matchingAdapters.filter((adapter) => !isUsenetAdapter(adapter))
     }
 
     if (adapters.length) {
@@ -230,15 +229,13 @@ class PornClient {
 
     if (adapterMethod === 'getStreams') {
       let usenetAdapter = matchingAdapters.find((adapter) => {
-        return adapter instanceof UsenetStreamer && adapter.supportsId(query.id)
+        return isUsenetAdapter(adapter) && adapter.supportsId(query.id)
       })
 
       if (usenetAdapter) {
         matchingAdapters = [usenetAdapter]
       } else {
-        matchingAdapters = matchingAdapters.filter((adapter) => {
-          return !(adapter instanceof UsenetStreamer)
-        })
+        matchingAdapters = matchingAdapters.filter((adapter) => !isUsenetAdapter(adapter))
       }
     }
 

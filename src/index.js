@@ -32,7 +32,7 @@ if (IS_PROD && ID === DEFAULT_ID) {
   process.exit(1)
 }
 
-let clientOptions = { proxy: PROXY, cache: CACHE, usenetStreamerBase: USENET_STREAMER }
+let clientOptions = { proxy: PROXY, cache: CACHE, usenetStreamerUrl: USENET_STREAMER }
 let availableSites = PornClient.getAdapters(clientOptions)
   .map((a) => a.DISPLAY_NAME)
   .join(', ')

@@ -42,7 +42,7 @@ if (IS_PROD && ID === DEFAULT_ID) {
 let clientOptions = {
   proxy: PROXY,
   cache: CACHE,
-  usenetStreamerBase: USENET_STREAMER
+  usenetStreamerUrl: USENET_STREAMER
 };
 
 let availableSites = _PornClient.default.getAdapters(clientOptions).map(a => a.DISPLAY_NAME).join(', ');
