@@ -7,8 +7,6 @@ exports.default = void 0;
 
 var _cacheManager = _interopRequireDefault(require("cache-manager"));
 
-var _cacheManagerRedisStore = _interopRequireDefault(require("cache-manager-redis-store"));
-
 var _HttpClient = _interopRequireDefault(require("./HttpClient"));
 
 var _DebridClient = _interopRequireDefault(require("./DebridClient"));
@@ -247,14 +245,9 @@ class PornClient {
     this.sorts = buildSorts(this.adapterClasses);
     this.catalogs = buildCatalogs(this.adapterClasses);
 
-    if (options.cache === '1') {
+    if (options.cache && options.cache !== '0') {
       this.cache = _cacheManager.default.caching({
         store: 'memory'
-      });
-    } else if (options.cache && options.cache !== '0') {
-      this.cache = _cacheManager.default.caching({
-        store: _cacheManagerRedisStore.default,
-        url: options.cache
       });
     }
   }

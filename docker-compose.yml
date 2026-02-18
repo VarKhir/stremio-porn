@@ -13,31 +13,13 @@ services:
       - GOONHUB_PORT=${GOONHUB_PORT:-8080}
       - GOONHUB_EMAIL=${GOONHUB_EMAIL:-}
       - GOONHUB_PROXY=${GOONHUB_PROXY:-}
-      - GOONHUB_CACHE=redis://redis:6379
+      - GOONHUB_CACHE=${GOONHUB_CACHE:-1}
       - GOONHUB_USENET_STREAMER=${GOONHUB_USENET_STREAMER:-}
       - GOONHUB_REAL_DEBRID_TOKEN=${GOONHUB_REAL_DEBRID_TOKEN:-}
       - GOONHUB_TORBOX_TOKEN=${GOONHUB_TORBOX_TOKEN:-}
-    depends_on:
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:${GOONHUB_PORT:-8080}/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-
-  redis:
-    image: redis:7-alpine
-    container_name: goonhub-redis
-    restart: unless-stopped
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  redis-data:
