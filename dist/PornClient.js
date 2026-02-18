@@ -300,7 +300,7 @@ class PornClient {
     return _asyncToGenerator(function* () {
       let results = yield adapter[method](request);
 
-      if (adapterMethod === 'getStreams') {
+      if (method === 'getStreams') {
         results = yield _this.debridClient.unrestrictStreams(results);
       }
 

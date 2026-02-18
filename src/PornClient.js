@@ -250,7 +250,7 @@ class PornClient {
 
   async _invokeAdapterMethod(adapter, method, request, idProp) {
     let results = await adapter[method](request)
-    if (adapterMethod === 'getStreams') {
+    if (method === 'getStreams') {
       results = await this.debridClient.unrestrictStreams(results)
     }
     return results.map((result) => {
