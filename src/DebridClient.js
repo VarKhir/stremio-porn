@@ -126,10 +126,16 @@ class DebridClient {
     let directUrl = await this._unrestrictWithRealDebrid(url)
 
     if (directUrl) {
-      return directUrl
+      return { url: directUrl, service: 'RD' }
     }
 
-    return this._unrestrictWithTorbox(url)
+    directUrl = await this._unrestrictWithTorbox(url)
+
+    if (directUrl) {
+      return { url: directUrl, service: 'TB' }
+    }
+
+    return null
   }
 
   async unrestrictStreams(streams) {
@@ -142,13 +148,15 @@ class DebridClient {
         return stream
       }
 
-      let unrestrictedUrl = await this._unrestrict(stream.url)
+      let result = await this._unrestrict(stream.url)
 
-      if (unrestrictedUrl && unrestrictedUrl !== stream.url) {
+      if (result && result.url !== stream.url) {
+        let tag = result.service === 'TB' ?
+          '[TB] ⚡' : `[${result.service}]`
         return {
           ...stream,
-          url: unrestrictedUrl,
-          name: stream.name || 'Debrid',
+          url: result.url,
+          name: `${tag} ${stream.name || 'Debrid'}`,
         }
       } else {
         return stream
