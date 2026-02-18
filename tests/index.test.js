@@ -20,7 +20,6 @@ function reset() {
   delete process.env.STREMIO_PORN_PORT
   delete process.env.STREMIO_PORN_PROXY
   delete process.env.STREMIO_PORN_CACHE
-  delete process.env.STREMIO_PORN_EMAIL
   delete process.env.NODE_ENV
 }
 
