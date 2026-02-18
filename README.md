@@ -98,7 +98,6 @@ The addon uses environment variables for **server-level** settings. Debrid servi
 | `STREMIO_PORN_ID` | `stremio_porn` | Addon identifier. Must be changed from the default in production mode |
 | `STREMIO_PORN_ENDPOINT` | `http://localhost` | Public base URL of the server. Must be publicly accessible in production |
 | `STREMIO_PORN_PORT` | `80` | Port the server listens on |
-| `STREMIO_PORN_EMAIL` | — | Contact email address shown in the addon manifest |
 | `STREMIO_PORN_PROXY` | — | HTTPS proxy address to route all outbound requests through |
 | `STREMIO_PORN_CACHE` | `1` | Caching mode: `0` = disabled, `1` = in-memory cache, or a Redis URL (e.g. `redis://host:6379`) |
 | `STREMIO_PORN_USENET_STREAMER` | — | Base URL to a Usenet streaming addon for IMDb/TMDb/TVDB id passthrough |
@@ -110,7 +109,6 @@ These common environment variables are used as fallbacks when the `STREMIO_PORN_
 | Variable | Fallback for |
 |----------|-------------|
 | `PORT` | `STREMIO_PORN_PORT` |
-| `EMAIL` | `STREMIO_PORN_EMAIL` |
 | `HTTPS_PROXY` | `STREMIO_PORN_PROXY` |
 | `REDIS_URL` | `STREMIO_PORN_CACHE` |
 

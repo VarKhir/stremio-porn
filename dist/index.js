@@ -33,7 +33,6 @@ const ENDPOINT = process.env.STREMIO_PORN_ENDPOINT || 'http://localhost';
 const PORT = process.env.STREMIO_PORN_PORT || process.env.PORT || '80';
 const PROXY = process.env.STREMIO_PORN_PROXY || process.env.HTTPS_PROXY;
 const CACHE = process.env.STREMIO_PORN_CACHE || process.env.REDIS_URL || '1';
-const EMAIL = process.env.STREMIO_PORN_EMAIL || process.env.EMAIL;
 const USENET_STREAMER = process.env.STREMIO_PORN_USENET_STREAMER;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
@@ -84,9 +83,6 @@ Watch porn videos and webcam streams from ${availableSites}\
   resources: ['stream', 'meta', 'catalog'],
   // Stremio manifest allows advertising supported external id prefixes for stream requests
   idPrefixes: _PornClient.default.getIdPrefixes(baseClientOptions, adapters),
-  // The docs mention `contactEmail`, but the template uses `email`
-  email: EMAIL,
-  contactEmail: EMAIL,
   endpoint: `${ENDPOINT}/stremioget/stremio/v1`,
   logo: `${ENDPOINT}/logo.png`,
   icon: `${ENDPOINT}/logo.png`,
@@ -232,7 +228,6 @@ server.on('listening', () => {
   let values = {
     endpoint: _chalk.default.green(MANIFEST.endpoint),
     id: ID === DEFAULT_ID ? _chalk.default.red(ID) : _chalk.default.green(ID),
-    email: EMAIL ? _chalk.default.green(EMAIL) : _chalk.default.red('undefined'),
     env: IS_PROD ? _chalk.default.green('production') : _chalk.default.green('development'),
     proxy: PROXY ? _chalk.default.green(PROXY) : _chalk.default.red('off'),
     cache: CACHE === '0' ? _chalk.default.red('off') : _chalk.default.green(CACHE === '1' ? 'on' : CACHE) // eslint-disable-next-line no-console
@@ -243,7 +238,6 @@ server.on('listening', () => {
 
     Endpoint:    ${values.endpoint}
     Addon Id:    ${values.id}
-    Email:       ${values.email}
     Environment: ${values.env}
     Proxy:       ${values.proxy}
     Cache:       ${values.cache}
