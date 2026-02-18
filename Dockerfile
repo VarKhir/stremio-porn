@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 LABEL org.opencontainers.image.title="goonhub"
 LABEL org.opencontainers.image.description="GoonHub - Stremio addon that provides videos and webcam streams from various porn sites"
