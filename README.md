@@ -1,7 +1,7 @@
 <p align="center">
   <img src="/static/logo.png">
 </p>
-<h1 align="center" style="border: 0">Porn Addon for Stremio</h1>
+<h1 align="center" style="border: 0">GoonHub - Addon for Stremio</h1>
 <p align="center">
   <em>Time to unsheathe your sword!</em>
 </p>
@@ -36,8 +36,8 @@ The addon is a web server that fetches video streams from the porn sites in resp
 To install and quickly start the addon, do:
 
 ```bash
-git clone https://github.com/naughty-doge/stremio-porn
-cd stremio-porn
+git clone https://github.com/VarKhir/goonhub
+cd goonhub
 yarn # or `npm install`
 yarn start # or `npm start`
 ```
@@ -46,8 +46,8 @@ By default the server starts on `localhost:80` in development mode and doesn't a
 
 In order for the addon to work publicly, the following environment variables must be set:
 - `NODE_ENV` to `production`
-- `STREMIO_PORN_ENDPOINT` to a public URL of the server
-- `STREMIO_PORN_ID` to a non-default value
+- `GOONHUB_ENDPOINT` to a public URL of the server
+- `GOONHUB_ID` to a non-default value
 
 Note: since this addon scrapes pages, it is recommended to run it behind a proxy and use Redis caching.
 
@@ -78,9 +78,9 @@ Each of these scripts can be used with `yarn <script>` or `npm run <script>`:
 - `build` builds the addon in the `dist` dir (add `-w` to watch)
 
 * `docker-build` builds the Docker image
-* `docker-start` launches the addon in a `stremio-porn` Docker container
-* `docker-dev` sets `NODE_ENV` to `development` and launches the addon in a `stremio-porn` Docker container
-* `docker-prod` sets `NODE_ENV` to `production` and launches the addon in a `stremio-porn` Docker container
+* `docker-start` launches the addon in a `goonhub` Docker container
+* `docker-dev` sets `NODE_ENV` to `development` and launches the addon in a `goonhub` Docker container
+* `docker-prod` sets `NODE_ENV` to `production` and launches the addon in a `goonhub` Docker container
 * `docker-stop` stops the Docker container
 
 When run in Docker using these scripts, the variables from the current shell are passed to the Docker container.
@@ -95,24 +95,24 @@ The addon uses environment variables for **server-level** settings. Debrid servi
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `NODE_ENV` | — | Set to `production` to announce the addon to the Stremio tracker |
-| `STREMIO_PORN_ID` | `stremio_porn` | Addon identifier. Must be changed from the default in production mode |
-| `STREMIO_PORN_ENDPOINT` | `http://localhost` | Public base URL of the server. Must be publicly accessible in production |
-| `STREMIO_PORN_PORT` | `80` | Port the server listens on |
-| `STREMIO_PORN_EMAIL` | — | Contact email address shown in the addon manifest |
-| `STREMIO_PORN_PROXY` | — | HTTPS proxy address to route all outbound requests through |
-| `STREMIO_PORN_CACHE` | `1` | Caching mode: `0` = disabled, `1` = in-memory cache, or a Redis URL (e.g. `redis://host:6379`) |
-| `STREMIO_PORN_USENET_STREAMER` | — | Base URL to a Usenet streaming addon for IMDb/TMDb/TVDB id passthrough |
+| `GOONHUB_ID` | `goonhub` | Addon identifier. Must be changed from the default in production mode |
+| `GOONHUB_ENDPOINT` | `http://localhost` | Public base URL of the server. Must be publicly accessible in production |
+| `GOONHUB_PORT` | `80` | Port the server listens on |
+| `GOONHUB_EMAIL` | — | Contact email address shown in the addon manifest |
+| `GOONHUB_PROXY` | — | HTTPS proxy address to route all outbound requests through |
+| `GOONHUB_CACHE` | `1` | Caching mode: `0` = disabled, `1` = in-memory cache, or a Redis URL (e.g. `redis://host:6379`) |
+| `GOONHUB_USENET_STREAMER` | — | Base URL to a Usenet streaming addon for IMDb/TMDb/TVDB id passthrough |
 
 ### Hosting Provider Fallbacks
 
-These common environment variables are used as fallbacks when the `STREMIO_PORN_*` equivalents are not set:
+These common environment variables are used as fallbacks when the `GOONHUB_*` equivalents are not set:
 
 | Variable | Fallback for |
 |----------|-------------|
-| `PORT` | `STREMIO_PORN_PORT` |
-| `EMAIL` | `STREMIO_PORN_EMAIL` |
-| `HTTPS_PROXY` | `STREMIO_PORN_PROXY` |
-| `REDIS_URL` | `STREMIO_PORN_CACHE` |
+| `PORT` | `GOONHUB_PORT` |
+| `EMAIL` | `GOONHUB_EMAIL` |
+| `HTTPS_PROXY` | `GOONHUB_PROXY` |
+| `REDIS_URL` | `GOONHUB_CACHE` |
 
 
 ## Screenshots

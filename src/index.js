@@ -10,15 +10,15 @@ const SUPPORTED_METHODS = [
   'stream.find', 'meta.find', 'meta.search', 'meta.get',
 ]
 const STATIC_DIR = 'static'
-const DEFAULT_ID = 'stremio_porn'
+const DEFAULT_ID = 'goonhub'
 
-const ID = process.env.STREMIO_PORN_ID || DEFAULT_ID
-const ENDPOINT = process.env.STREMIO_PORN_ENDPOINT || 'http://localhost'
-const PORT = process.env.STREMIO_PORN_PORT || process.env.PORT || '80'
-const PROXY = process.env.STREMIO_PORN_PROXY || process.env.HTTPS_PROXY
-const CACHE = process.env.STREMIO_PORN_CACHE || process.env.REDIS_URL || '1'
-const EMAIL = process.env.STREMIO_PORN_EMAIL || process.env.EMAIL
-const USENET_STREAMER = process.env.STREMIO_PORN_USENET_STREAMER
+const ID = process.env.GOONHUB_ID || DEFAULT_ID
+const ENDPOINT = process.env.GOONHUB_ENDPOINT || 'http://localhost'
+const PORT = process.env.GOONHUB_PORT || process.env.PORT || '80'
+const PROXY = process.env.GOONHUB_PROXY || process.env.HTTPS_PROXY
+const CACHE = process.env.GOONHUB_CACHE || process.env.REDIS_URL || '1'
+const EMAIL = process.env.GOONHUB_EMAIL || process.env.EMAIL
+const USENET_STREAMER = process.env.GOONHUB_USENET_STREAMER
 const IS_PROD = process.env.NODE_ENV === 'production'
 
 
@@ -57,7 +57,7 @@ let adapters = PornClient.getAdapters(baseClientOptions)
 let availableSites = adapters.map((a) => a.DISPLAY_NAME).join(', ')
 
 const MANIFEST = {
-  name: 'Porn',
+  name: 'GoonHub',
   id: ID,
   version: pkg.version,
   description: `\

@@ -1,26 +1,26 @@
 services:
-  stremio-porn:
+  goonhub:
     build: .
-    container_name: stremio-porn
+    container_name: goonhub
     restart: unless-stopped
     ports:
-      - "${STREMIO_PORN_PORT:-8080}:${STREMIO_PORN_PORT:-8080}"
+      - "${GOONHUB_PORT:-8080}:${GOONHUB_PORT:-8080}"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
-      - STREMIO_PORN_ID=${STREMIO_PORN_ID:-stremio_porn}
-      - STREMIO_PORN_ENDPOINT=${STREMIO_PORN_ENDPOINT:-http://localhost:8080}
-      - STREMIO_PORN_PORT=${STREMIO_PORN_PORT:-8080}
-      - STREMIO_PORN_EMAIL=${STREMIO_PORN_EMAIL:-}
-      - STREMIO_PORN_PROXY=${STREMIO_PORN_PROXY:-}
-      - STREMIO_PORN_CACHE=redis://redis:6379
-      - STREMIO_PORN_USENET_STREAMER=${STREMIO_PORN_USENET_STREAMER:-}
-      - STREMIO_PORN_REAL_DEBRID_TOKEN=${STREMIO_PORN_REAL_DEBRID_TOKEN:-}
-      - STREMIO_PORN_TORBOX_TOKEN=${STREMIO_PORN_TORBOX_TOKEN:-}
+      - GOONHUB_ID=${GOONHUB_ID:-goonhub}
+      - GOONHUB_ENDPOINT=${GOONHUB_ENDPOINT:-http://localhost:8080}
+      - GOONHUB_PORT=${GOONHUB_PORT:-8080}
+      - GOONHUB_EMAIL=${GOONHUB_EMAIL:-}
+      - GOONHUB_PROXY=${GOONHUB_PROXY:-}
+      - GOONHUB_CACHE=redis://redis:6379
+      - GOONHUB_USENET_STREAMER=${GOONHUB_USENET_STREAMER:-}
+      - GOONHUB_REAL_DEBRID_TOKEN=${GOONHUB_REAL_DEBRID_TOKEN:-}
+      - GOONHUB_TORBOX_TOKEN=${GOONHUB_TORBOX_TOKEN:-}
     depends_on:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${STREMIO_PORN_PORT:-8080}/"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${GOONHUB_PORT:-8080}/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -28,7 +28,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: stremio-porn-redis
+    container_name: goonhub-redis
     restart: unless-stopped
     volumes:
       - redis-data:/data

@@ -16,7 +16,7 @@ import UsenetStreamer from './adapters/UsenetStreamer'
 
 const ID = 'porn_id'
 const SORT_PROP_PREFIX = 'popularities.porn.'
-const CACHE_PREFIX = 'stremio-porn|'
+const CACHE_PREFIX = 'goonhub|'
 // Making multiple requests to multiple adapters for different types
 // and then aggregating them is a lot of work,
 // so we only support 1 adapter per request for now.

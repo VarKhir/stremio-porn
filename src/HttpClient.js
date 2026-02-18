@@ -4,7 +4,7 @@ import HttpProxyAgent from 'http-proxy-agent'
 
 
 const DEFAULT_HEADERS = {
-  'user-agent': 'stremio-porn',
+  'user-agent': 'goonhub',
 }
 const DEFAULT_REQUEST_OPTIONS = {
   timeout: 20000,
