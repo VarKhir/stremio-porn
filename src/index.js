@@ -51,6 +51,7 @@ Watch porn videos and webcam streams from ${availableSites}\
   sorts: PornClient.getSorts(clientOptions),
   catalogs: PornClient.getCatalogs(clientOptions),
   resources: ['stream', 'meta', 'catalog'],
+  // Stremio manifest allows advertising supported external id prefixes for stream requests
   idPrefixes: PornClient.getIdPrefixes(clientOptions),
   // The docs mention `contactEmail`, but the template uses `email`
   email: EMAIL,

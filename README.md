@@ -85,7 +85,7 @@ To configure the addon, set the following environment variables before running i
 - `STREMIO_PORN_EMAIL` — email address that can be used to contact you (unset by default)
 - `STREMIO_PORN_PROXY` — HTTPS proxy address to route all the outbound requests to (unset by default)
 - `STREMIO_PORN_CACHE` — 0 to turn caching off, 1 to cache in memory, or a Redis URL (e.g. `redis://example.com:6379`) to cache in Redis (defaults to 1)
-- `STREMIO_PORN_USENET_STREAMER` — base URL to a compatible Usenet addon (e.g. `https://example.com/<token>`); trailing slashes are trimmed automatically and streams for IMDb/TMDb/TVDB/nzbdav ids will be proxied to that addon
+- `STREMIO_PORN_USENET_STREAMER` — base URL to a compatible Usenet addon (e.g. `https://example.com/<token>`); trailing slashes are trimmed automatically and streams for IMDb/TMDb/TVDB/nzbdav (NZBDav history) ids will be proxied to that addon
 
 
 The addon also respects environment variables commonly used by many hosting providers (e.g. Heroku):

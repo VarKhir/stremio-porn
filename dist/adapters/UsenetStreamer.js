@@ -63,11 +63,18 @@ class UsenetStreamer extends _BaseAdapter.default {
       }
 
       let url = `${_this.baseUrl}/stream/${type}/${encodeURIComponent(id)}.json`;
-      let {
-        body
-      } = yield _this.httpClient.request(url, {
-        json: true
-      });
+      let body;
+
+      try {
+        ;
+        ({
+          body
+        } = yield _this.httpClient.request(url, {
+          json: true
+        }));
+      } catch (err) {
+        return [];
+      }
 
       if (Array.isArray(body)) {
         return body;

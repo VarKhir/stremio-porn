@@ -228,7 +228,7 @@ class PornClient {
       })
     }
 
-    if (adapterMethod === 'getStreams' && usenetAdapters.length) {
+    if (adapterMethod === 'getStreams' && usenetAdapters.length && query.id) {
       let usenetAdapter = usenetAdapters.find((adapter) => adapter.supportsId(query.id))
       matchingAdapters = usenetAdapter ? [usenetAdapter] : matchingAdapters.filter((adapter) => {
         return !isUsenetAdapter(adapter)

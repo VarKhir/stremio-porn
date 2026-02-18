@@ -49,7 +49,13 @@ class UsenetStreamer extends BaseAdapter {
     }
 
     let url = `${this.baseUrl}/stream/${type}/${encodeURIComponent(id)}.json`
-    let { body } = await this.httpClient.request(url, { json: true })
+    let body
+
+    try {
+      ;({ body } = await this.httpClient.request(url, { json: true }))
+    } catch (err) {
+      return []
+    }
 
     if (Array.isArray(body)) {
       return body
