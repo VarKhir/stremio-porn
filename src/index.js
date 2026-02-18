@@ -16,7 +16,7 @@ const ID = process.env.GOONHUB_ID || DEFAULT_ID
 const ENDPOINT = process.env.GOONHUB_ENDPOINT || 'http://localhost'
 const PORT = process.env.GOONHUB_PORT || process.env.PORT || '80'
 const PROXY = process.env.GOONHUB_PROXY || process.env.HTTPS_PROXY
-const CACHE = process.env.GOONHUB_CACHE || process.env.REDIS_URL || '1'
+const CACHE = process.env.GOONHUB_CACHE || '1'
 const EMAIL = process.env.GOONHUB_EMAIL || process.env.EMAIL
 const USENET_STREAMER = process.env.GOONHUB_USENET_STREAMER
 const IS_PROD = process.env.NODE_ENV === 'production'
@@ -220,7 +220,7 @@ server
       proxy: PROXY ? chalk.green(PROXY) : chalk.red('off'),
       cache: (CACHE === '0') ?
         chalk.red('off') :
-        chalk.green(CACHE === '1' ? 'on' : CACHE),
+        chalk.green('on'),
     }
 
     // eslint-disable-next-line no-console

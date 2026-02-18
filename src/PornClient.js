@@ -1,5 +1,4 @@
 import cacheManager from 'cache-manager'
-import redisStore from 'cache-manager-redis-store'
 import HttpClient from './HttpClient'
 import DebridClient from './DebridClient'
 import PornHub from './adapters/PornHub'
@@ -205,13 +204,8 @@ class PornClient {
     this.sorts = buildSorts(this.adapterClasses)
     this.catalogs = buildCatalogs(this.adapterClasses)
 
-    if (options.cache === '1') {
+    if (options.cache && options.cache !== '0') {
       this.cache = cacheManager.caching({ store: 'memory' })
-    } else if (options.cache && options.cache !== '0') {
-      this.cache = cacheManager.caching({
-        store: redisStore,
-        url: options.cache,
-      })
     }
   }
 

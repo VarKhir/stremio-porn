@@ -32,7 +32,7 @@ const ID = process.env.GOONHUB_ID || DEFAULT_ID;
 const ENDPOINT = process.env.GOONHUB_ENDPOINT || 'http://localhost';
 const PORT = process.env.GOONHUB_PORT || process.env.PORT || '80';
 const PROXY = process.env.GOONHUB_PROXY || process.env.HTTPS_PROXY;
-const CACHE = process.env.GOONHUB_CACHE || process.env.REDIS_URL || '1';
+const CACHE = process.env.GOONHUB_CACHE || '1';
 const EMAIL = process.env.GOONHUB_EMAIL || process.env.EMAIL;
 const USENET_STREAMER = process.env.GOONHUB_USENET_STREAMER;
 const IS_PROD = process.env.NODE_ENV === 'production';
@@ -235,7 +235,7 @@ server.on('listening', () => {
     email: EMAIL ? _chalk.default.green(EMAIL) : _chalk.default.red('undefined'),
     env: IS_PROD ? _chalk.default.green('production') : _chalk.default.green('development'),
     proxy: PROXY ? _chalk.default.green(PROXY) : _chalk.default.red('off'),
-    cache: CACHE === '0' ? _chalk.default.red('off') : _chalk.default.green(CACHE === '1' ? 'on' : CACHE) // eslint-disable-next-line no-console
+    cache: CACHE === '0' ? _chalk.default.red('off') : _chalk.default.green('on') // eslint-disable-next-line no-console
 
   };
   console.log(`

@@ -21,7 +21,7 @@ This is a [Stremio](https://www.stremio.com/) addon that provides porn content f
 - Torbox cache availability is checked before unrestricting links for reliable results
 - Optional Usenet streaming passthrough for IMDb/TMDb/TVDB ids (e.g. [UsenetStreamer](https://github.com/Sanket9225/UsenetStreamer))
 - Supports Docker out of the box
-- Caches results in memory or Redis
+- Caches results in memory
 - Limits the number of concurrent requests to avoid overloading the sites
 - Supports HTTPS proxy
 - Configurable via environment variables
@@ -49,7 +49,7 @@ In order for the addon to work publicly, the following environment variables mus
 - `GOONHUB_ENDPOINT` to a public URL of the server
 - `GOONHUB_ID` to a non-default value
 
-Note: since this addon scrapes pages, it is recommended to run it behind a proxy and use Redis caching.
+Note: since this addon scrapes pages, it is recommended to run it behind a proxy.
 
 
 ## Debrid Services
@@ -100,7 +100,7 @@ The addon uses environment variables for **server-level** settings. Debrid servi
 | `GOONHUB_PORT` | `80` | Port the server listens on |
 | `GOONHUB_EMAIL` | — | Contact email address shown in the addon manifest |
 | `GOONHUB_PROXY` | — | HTTPS proxy address to route all outbound requests through |
-| `GOONHUB_CACHE` | `1` | Caching mode: `0` = disabled, `1` = in-memory cache, or a Redis URL (e.g. `redis://host:6379`) |
+| `GOONHUB_CACHE` | `1` | Caching mode: `0` = disabled, `1` = in-memory cache |
 | `GOONHUB_USENET_STREAMER` | — | Base URL to a Usenet streaming addon for IMDb/TMDb/TVDB id passthrough |
 
 ### Hosting Provider Fallbacks
@@ -112,7 +112,6 @@ These common environment variables are used as fallbacks when the `GOONHUB_*` eq
 | `PORT` | `GOONHUB_PORT` |
 | `EMAIL` | `GOONHUB_EMAIL` |
 | `HTTPS_PROXY` | `GOONHUB_PROXY` |
-| `REDIS_URL` | `GOONHUB_CACHE` |
 
 
 ## Screenshots
