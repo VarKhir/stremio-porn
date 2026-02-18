@@ -23,6 +23,8 @@ var _PornCom = _interopRequireDefault(require("./adapters/PornCom"));
 
 var _Chaturbate = _interopRequireDefault(require("./adapters/Chaturbate"));
 
+var _UsenetStreamer = _interopRequireDefault(require("./adapters/UsenetStreamer"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } } function _next(value) { step("next", value); } function _throw(err) { step("throw", err); } _next(); }); }; }
@@ -40,16 +42,48 @@ const CACHE_PREFIX = 'stremio-porn|'; // Making multiple requests to multiple ad
 // so we only support 1 adapter per request for now.
 
 const MAX_ADAPTERS_PER_REQUEST = 1;
-const ADAPTERS = [_PornHub.default, _RedTube.default, _YouPorn.default, _SpankWire.default, _PornCom.default, _Chaturbate.default];
-const SORTS = ADAPTERS.map(({
-  name,
-  DISPLAY_NAME,
-  SUPPORTED_TYPES
-}) => ({
-  name: `Porn: ${DISPLAY_NAME}`,
-  prop: `${SORT_PROP_PREFIX}${name}`,
-  types: SUPPORTED_TYPES
-}));
+const BASE_ADAPTERS = [_PornHub.default, _RedTube.default, _YouPorn.default, _SpankWire.default, _PornCom.default, _Chaturbate.default];
+
+function buildSorts(adapters) {
+  return adapters.map(({
+    name,
+    DISPLAY_NAME,
+    SUPPORTED_TYPES
+  }) => ({
+    name: `Porn: ${DISPLAY_NAME}`,
+    prop: `${SORT_PROP_PREFIX}${name}`,
+    types: SUPPORTED_TYPES
+  }));
+}
+
+function buildCatalogs(adapters) {
+  return adapters.reduce((catalogs, Adapter) => {
+    if (Adapter === _UsenetStreamer.default) {
+      return catalogs;
+    }
+
+    Adapter.SUPPORTED_TYPES.forEach(type => {
+      catalogs.push({
+        type,
+        id: `${Adapter.name.toLowerCase()}-${type}`,
+        name: Adapter.DISPLAY_NAME,
+        extra: [{
+          name: 'search'
+        }, {
+          name: 'skip'
+        }, {
+          name: 'genre',
+          isRequired: false
+        }, {
+          name: 'sort',
+          options: buildSorts([Adapter]).map(s => s.prop)
+        }]
+      });
+    });
+    return catalogs;
+  }, []);
+}
+
 const METHODS = {
   'stream.find': {
     adapterMethod: 'getStreams',
@@ -157,9 +191,40 @@ function mergeResults(results) {
 }
 
 class PornClient {
+  static getAdapters(options = {}) {
+    let adapters = [...BASE_ADAPTERS];
+
+    if (options.usenetStreamerBase) {
+      adapters.push(_UsenetStreamer.default);
+    }
+
+    return adapters;
+  }
+
+  static getSorts(options = {}) {
+    return buildSorts(this.getAdapters(options));
+  }
+
+  static getCatalogs(options = {}) {
+    return buildCatalogs(this.getAdapters(options));
+  }
+
   constructor(options) {
     let httpClient = new _HttpClient.default(options);
-    this.adapters = ADAPTERS.map(Adapter => new Adapter(httpClient));
+    this.adapterClasses = PornClient.getAdapters(options);
+    this.adapters = this.adapterClasses.map(Adapter => {
+      let adapterOptions = {};
+
+      if (Adapter === _UsenetStreamer.default) {
+        adapterOptions = {
+          baseUrl: options.usenetStreamerBase
+        };
+      }
+
+      return new Adapter(httpClient, adapterOptions);
+    });
+    this.sorts = buildSorts(this.adapterClasses);
+    this.catalogs = buildCatalogs(this.adapterClasses);
 
     if (options.cache === '1') {
       this.cache = _cacheManager.default.caching({
@@ -173,7 +238,7 @@ class PornClient {
     }
   }
 
-  _getAdaptersForRequest(request) {
+  _getAdaptersForRequest(request, adapterMethod) {
     let {
       query,
       adapters
@@ -182,6 +247,12 @@ class PornClient {
       type
     } = query;
     let matchingAdapters = this.adapters;
+
+    if (adapterMethod !== 'getStreams') {
+      matchingAdapters = matchingAdapters.filter(adapter => {
+        return !(adapter instanceof _UsenetStreamer.default);
+      });
+    }
 
     if (adapters.length) {
       matchingAdapters = matchingAdapters.filter(adapter => {
@@ -193,6 +264,20 @@ class PornClient {
       matchingAdapters = matchingAdapters.filter(adapter => {
         return adapter.constructor.SUPPORTED_TYPES.includes(type);
       });
+    }
+
+    if (adapterMethod === 'getStreams') {
+      let usenetAdapter = matchingAdapters.find(adapter => {
+        return adapter instanceof _UsenetStreamer.default && adapter.supportsId(query.id);
+      });
+
+      if (usenetAdapter) {
+        matchingAdapters = [usenetAdapter];
+      } else {
+        matchingAdapters = matchingAdapters.filter(adapter => {
+          return !(adapter instanceof _UsenetStreamer.default);
+        });
+      }
     }
 
     return matchingAdapters.slice(0, MAX_ADAPTERS_PER_REQUEST);
@@ -214,7 +299,7 @@ class PornClient {
     return _asyncToGenerator(function* () {
       let request = normalizeRequest(rawRequest);
 
-      let adapters = _this._getAdaptersForRequest(request);
+      let adapters = _this._getAdaptersForRequest(request, methodName);
 
       if (!adapters.length) {
         throw new Error('Couldn\'t find suitable adapters for a request');
@@ -272,7 +357,7 @@ class PornClient {
 
 }
 
-_defineProperty(_defineProperty(_defineProperty(PornClient, "ID", ID), "ADAPTERS", ADAPTERS), "SORTS", SORTS);
+_defineProperty(PornClient, "ID", ID);
 
 var _default = PornClient;
 exports.default = _default;

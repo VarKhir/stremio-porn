@@ -7,6 +7,7 @@ import YouPorn from './adapters/YouPorn'
 import SpankWire from './adapters/SpankWire'
 import PornCom from './adapters/PornCom'
 import Chaturbate from './adapters/Chaturbate'
+import UsenetStreamer from './adapters/UsenetStreamer'
 
 // EPorner has restricted video downloads to 30 per day per guest
 // import EPorner from './adapters/EPorner'
@@ -19,12 +20,43 @@ const CACHE_PREFIX = 'stremio-porn|'
 // and then aggregating them is a lot of work,
 // so we only support 1 adapter per request for now.
 const MAX_ADAPTERS_PER_REQUEST = 1
-const ADAPTERS = [PornHub, RedTube, YouPorn, SpankWire, PornCom, Chaturbate]
-const SORTS = ADAPTERS.map(({ name, DISPLAY_NAME, SUPPORTED_TYPES }) => ({
-  name: `Porn: ${DISPLAY_NAME}`,
-  prop: `${SORT_PROP_PREFIX}${name}`,
-  types: SUPPORTED_TYPES,
-}))
+const BASE_ADAPTERS = [PornHub, RedTube, YouPorn, SpankWire, PornCom, Chaturbate]
+function buildSorts(adapters) {
+  return adapters.map(({ name, DISPLAY_NAME, SUPPORTED_TYPES }) => ({
+    name: `Porn: ${DISPLAY_NAME}`,
+    prop: `${SORT_PROP_PREFIX}${name}`,
+    types: SUPPORTED_TYPES,
+  }))
+}
+
+function buildCatalogs(adapters) {
+  return adapters.reduce((catalogs, Adapter) => {
+    if (Adapter === UsenetStreamer) {
+      return catalogs
+    }
+
+    Adapter.SUPPORTED_TYPES.forEach((type) => {
+      catalogs.push({
+        type,
+        id: `${Adapter.name.toLowerCase()}-${type}`,
+        name: Adapter.DISPLAY_NAME,
+        extra: [{
+          name: 'search',
+        }, {
+          name: 'skip',
+        }, {
+          name: 'genre',
+          isRequired: false,
+        }, {
+          name: 'sort',
+          options: buildSorts([Adapter]).map((s) => s.prop),
+        }],
+      })
+    })
+
+    return catalogs
+  }, [])
+}
 const METHODS = {
   'stream.find': {
     adapterMethod: 'getStreams',
@@ -120,12 +152,38 @@ function mergeResults(results) {
 
 class PornClient {
   static ID = ID
-  static ADAPTERS = ADAPTERS
-  static SORTS = SORTS
+  static getAdapters(options = {}) {
+    let adapters = [...BASE_ADAPTERS]
+
+    if (options.usenetStreamerBase) {
+      adapters.push(UsenetStreamer)
+    }
+
+    return adapters
+  }
+
+  static getSorts(options = {}) {
+    return buildSorts(this.getAdapters(options))
+  }
+
+  static getCatalogs(options = {}) {
+    return buildCatalogs(this.getAdapters(options))
+  }
 
   constructor(options) {
     let httpClient = new HttpClient(options)
-    this.adapters = ADAPTERS.map((Adapter) => new Adapter(httpClient))
+    this.adapterClasses = PornClient.getAdapters(options)
+    this.adapters = this.adapterClasses.map((Adapter) => {
+      let adapterOptions = {}
+
+      if (Adapter === UsenetStreamer) {
+        adapterOptions = { baseUrl: options.usenetStreamerBase }
+      }
+
+      return new Adapter(httpClient, adapterOptions)
+    })
+    this.sorts = buildSorts(this.adapterClasses)
+    this.catalogs = buildCatalogs(this.adapterClasses)
 
     if (options.cache === '1') {
       this.cache = cacheManager.caching({ store: 'memory' })
@@ -137,10 +195,16 @@ class PornClient {
     }
   }
 
-  _getAdaptersForRequest(request) {
+  _getAdaptersForRequest(request, adapterMethod) {
     let { query, adapters } = request
     let { type } = query
     let matchingAdapters = this.adapters
+
+    if (adapterMethod !== 'getStreams') {
+      matchingAdapters = matchingAdapters.filter((adapter) => {
+        return !(adapter instanceof UsenetStreamer)
+      })
+    }
 
     if (adapters.length) {
       matchingAdapters = matchingAdapters.filter((adapter) => {
@@ -152,6 +216,20 @@ class PornClient {
       matchingAdapters = matchingAdapters.filter((adapter) => {
         return adapter.constructor.SUPPORTED_TYPES.includes(type)
       })
+    }
+
+    if (adapterMethod === 'getStreams') {
+      let usenetAdapter = matchingAdapters.find((adapter) => {
+        return adapter instanceof UsenetStreamer && adapter.supportsId(query.id)
+      })
+
+      if (usenetAdapter) {
+        matchingAdapters = [usenetAdapter]
+      } else {
+        matchingAdapters = matchingAdapters.filter((adapter) => {
+          return !(adapter instanceof UsenetStreamer)
+        })
+      }
     }
 
     return matchingAdapters.slice(0, MAX_ADAPTERS_PER_REQUEST)
@@ -167,7 +245,7 @@ class PornClient {
   // Aggregate method that dispatches requests to matching adapters
   async _invokeMethod(methodName, rawRequest, idProp) {
     let request = normalizeRequest(rawRequest)
-    let adapters = this._getAdaptersForRequest(request)
+    let adapters = this._getAdaptersForRequest(request, methodName)
 
     if (!adapters.length) {
       throw new Error('Couldn\'t find suitable adapters for a request')

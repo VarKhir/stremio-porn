@@ -30,6 +30,7 @@ const PORT = process.env.STREMIO_PORN_PORT || process.env.PORT || '80';
 const PROXY = process.env.STREMIO_PORN_PROXY || process.env.HTTPS_PROXY;
 const CACHE = process.env.STREMIO_PORN_CACHE || process.env.REDIS_URL || '1';
 const EMAIL = process.env.STREMIO_PORN_EMAIL || process.env.EMAIL;
+const USENET_STREAMER = process.env.STREMIO_PORN_USENET_STREAMER;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
 if (IS_PROD && ID === DEFAULT_ID) {
@@ -38,7 +39,13 @@ if (IS_PROD && ID === DEFAULT_ID) {
   process.exit(1);
 }
 
-let availableSites = _PornClient.default.ADAPTERS.map(a => a.DISPLAY_NAME).join(', ');
+let clientOptions = {
+  proxy: PROXY,
+  cache: CACHE,
+  usenetStreamerBase: USENET_STREAMER
+};
+
+let availableSites = _PornClient.default.getAdapters(clientOptions).map(a => a.DISPLAY_NAME).join(', ');
 
 const MANIFEST = {
   name: 'Porn',
@@ -51,7 +58,10 @@ Watch porn videos and webcam streams from ${availableSites}\
   types: ['movie', 'tv'],
   idProperty: _PornClient.default.ID,
   dontAnnounce: !IS_PROD,
-  sorts: _PornClient.default.SORTS,
+  sorts: _PornClient.default.getSorts(clientOptions),
+  catalogs: _PornClient.default.getCatalogs(clientOptions),
+  resources: ['stream', 'meta', 'catalog'],
+  idPrefixes: ['tt', 'tmdb', 'tvdb', 'nzbdav'],
   // The docs mention `contactEmail`, but the template uses `email`
   email: EMAIL,
   contactEmail: EMAIL,
@@ -108,10 +118,7 @@ function makeMethods(client, methodNames) {
   }, {});
 }
 
-let client = new _PornClient.default({
-  proxy: PROXY,
-  cache: CACHE
-});
+let client = new _PornClient.default(clientOptions);
 let methods = makeMethods(client, SUPPORTED_METHODS);
 let addon = new _stremioAddons.default.Server(methods, MANIFEST);
 
