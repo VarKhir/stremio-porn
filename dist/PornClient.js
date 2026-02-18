@@ -39,7 +39,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 // import EPorner from './adapters/EPorner'
 const ID = 'porn_id';
 const SORT_PROP_PREFIX = 'popularities.porn.';
-const CACHE_PREFIX = 'stremio-porn|'; // Making multiple requests to multiple adapters for different types
+const CACHE_PREFIX = 'goonhub|'; // Making multiple requests to multiple adapters for different types
 // and then aggregating them is a lot of work,
 // so we only support 1 adapter per request for now.
 

@@ -15,12 +15,12 @@ console.error = () => {}
 function reset() {
   jest.resetModules()
 
-  delete process.env.STREMIO_PORN_ID
-  delete process.env.STREMIO_PORN_ENDPOINT
-  delete process.env.STREMIO_PORN_PORT
-  delete process.env.STREMIO_PORN_PROXY
-  delete process.env.STREMIO_PORN_CACHE
-  delete process.env.STREMIO_PORN_EMAIL
+  delete process.env.GOONHUB_ID
+  delete process.env.GOONHUB_ENDPOINT
+  delete process.env.GOONHUB_PORT
+  delete process.env.GOONHUB_PROXY
+  delete process.env.GOONHUB_CACHE
+  delete process.env.GOONHUB_EMAIL
   delete process.env.NODE_ENV
 }
 
@@ -79,7 +79,7 @@ describe('Addon @integration', () => {
   })
 
   test('When a port is specified, starts a web server on it', async () => {
-    process.env.STREMIO_PORN_PORT = '9028'
+    process.env.GOONHUB_PORT = '9028'
     await addon.start()
     expect(addon.server.address().port).toBe(9028)
   })
