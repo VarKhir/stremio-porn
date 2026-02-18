@@ -303,13 +303,13 @@ class PornClient {
   } // Aggregate method that dispatches requests to matching adapters
 
 
-  _invokeMethod(methodName, rawRequest, idProp) {
+  _invokeMethod(adapterMethod, rawRequest, idProp) {
     var _this = this;
 
     return _asyncToGenerator(function* () {
       let request = normalizeRequest(rawRequest);
 
-      let adapters = _this._getAdaptersForRequest(request, methodName);
+      let adapters = _this._getAdaptersForRequest(request, adapterMethod);
 
       if (!adapters.length) {
         throw new Error('Couldn\'t find suitable adapters for a request');
@@ -318,7 +318,7 @@ class PornClient {
       let results = [];
 
       for (let adapter of adapters) {
-        let adapterResults = yield _this._invokeAdapterMethod(adapter, methodName, request, idProp);
+        let adapterResults = yield _this._invokeAdapterMethod(adapter, adapterMethod, request, idProp);
         results.push(adapterResults);
       }
 

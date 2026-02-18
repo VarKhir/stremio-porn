@@ -253,9 +253,9 @@ class PornClient {
   }
 
   // Aggregate method that dispatches requests to matching adapters
-  async _invokeMethod(methodName, rawRequest, idProp) {
+  async _invokeMethod(adapterMethod, rawRequest, idProp) {
     let request = normalizeRequest(rawRequest)
-    let adapters = this._getAdaptersForRequest(request, methodName)
+    let adapters = this._getAdaptersForRequest(request, adapterMethod)
 
     if (!adapters.length) {
       throw new Error('Couldn\'t find suitable adapters for a request')
@@ -265,7 +265,7 @@ class PornClient {
 
     for (let adapter of adapters) {
       let adapterResults = await this._invokeAdapterMethod(
-        adapter, methodName, request, idProp
+        adapter, adapterMethod, request, idProp
       )
       results.push(adapterResults)
     }
