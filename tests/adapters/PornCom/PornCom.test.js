@@ -59,6 +59,7 @@ describe('PornCom', () => {
       const results = adapter._parseApiResponse(API_RESPONSE)
 
       expect(results).toHaveLength(70)
+      /* eslint-disable camelcase */
       expect(results[0]).toEqual({
         id: 4451515,
         url: 'https://www.porn.com/videos/homemade-anal-party-milf-ass-treatment-4451515',
@@ -79,6 +80,7 @@ describe('PornCom', () => {
         embed_url: 'https://www.porn.com/videos/embed/4451515',
         embed_html: '<iframe scrolling="no" width="600" height="371" src="https://www.porn.com/videos/embed/4451515" frameborder="0"></iframe>',
       })
+      /* eslint-enable camelcase */
     })
   })
 })

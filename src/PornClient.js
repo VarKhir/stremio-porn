@@ -11,7 +11,6 @@ import Chaturbate from './adapters/Chaturbate.js'
 import UsenetStreamer from './adapters/UsenetStreamer.js'
 
 
-
 const ID = 'porn_id'
 const SORT_PROP_PREFIX = 'popularities.porn.'
 const CACHE_PREFIX = 'stremio-porn|'

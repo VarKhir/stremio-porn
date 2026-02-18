@@ -96,7 +96,7 @@ class Chaturbate extends BaseAdapter {
         Referer: `${BASE_URL}/${id}`,
       },
       body: {
-        room_slug: id,
+        room_slug: id, // eslint-disable-line camelcase
         bandwidth: 'high',
       },
     }

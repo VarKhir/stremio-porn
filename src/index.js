@@ -93,7 +93,9 @@ function makeMethod(client, methodName) {
       error = err
 
       console.error(
-        `${chalk.gray(new Date().toLocaleString())} An error has occurred while processing the following request to ${methodName}:`
+        `${chalk.gray(new Date().toLocaleString())} ` +
+        'An error has occurred while processing ' +
+        `the following request to ${methodName}:`
       )
       console.error(request)
       console.error(err)
