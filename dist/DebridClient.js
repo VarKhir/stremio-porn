@@ -135,27 +135,30 @@ class DebridClient {
         return streams || [];
       }
 
-      let results = [];
+      return Promise.all(streams.map(
+      /*#__PURE__*/
+      function () {
+        var _ref = _asyncToGenerator(function* (stream) {
+          if (!stream || !stream.url) {
+            return stream;
+          }
 
-      for (let stream of streams) {
-        if (!stream || !stream.url) {
-          results.push(stream);
-          continue;
-        }
+          let unrestrictedUrl = yield _this4._unrestrict(stream.url);
 
-        let unrestrictedUrl = yield _this4._unrestrict(stream.url);
+          if (unrestrictedUrl && unrestrictedUrl !== stream.url) {
+            return _objectSpread({}, stream, {
+              url: unrestrictedUrl,
+              name: stream.name || 'Debrid'
+            });
+          } else {
+            return stream;
+          }
+        });
 
-        if (unrestrictedUrl && unrestrictedUrl !== stream.url) {
-          results.push(_objectSpread({}, stream, {
-            url: unrestrictedUrl,
-            name: stream.name || 'Debrid'
-          }));
-        } else {
-          results.push(stream);
-        }
-      }
-
-      return results;
+        return function (_x) {
+          return _ref.apply(this, arguments);
+        };
+      }()));
     })();
   }
 

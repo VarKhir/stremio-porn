@@ -106,28 +106,23 @@ class DebridClient {
       return streams || []
     }
 
-    let results = []
-
-    for (let stream of streams) {
+    return Promise.all(streams.map(async (stream) => {
       if (!stream || !stream.url) {
-        results.push(stream)
-        continue
+        return stream
       }
 
       let unrestrictedUrl = await this._unrestrict(stream.url)
 
       if (unrestrictedUrl && unrestrictedUrl !== stream.url) {
-        results.push({
+        return {
           ...stream,
           url: unrestrictedUrl,
           name: stream.name || 'Debrid',
-        })
+        }
       } else {
-        results.push(stream)
+        return stream
       }
-    }
-
-    return results
+    }))
   }
 }
 
