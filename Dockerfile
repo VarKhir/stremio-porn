@@ -1,5 +1,9 @@
 FROM node:18-alpine
 
+LABEL org.opencontainers.image.title="goonhub"
+LABEL org.opencontainers.image.description="GoonHub - Stremio addon that provides videos and webcam streams from various porn sites"
+LABEL org.opencontainers.image.source="https://github.com/VarKhir/goonhub"
+
 WORKDIR /var/stremio_addon
 
 # Copy package files first for better layer caching

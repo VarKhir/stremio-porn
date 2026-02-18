@@ -1,5 +1,6 @@
 services:
   goonhub:
+    image: ghcr.io/varkhir/goonhub:latest
     build: .
     container_name: goonhub
     restart: unless-stopped
