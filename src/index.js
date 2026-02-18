@@ -21,7 +21,6 @@ const EMAIL = process.env.STREMIO_PORN_EMAIL || process.env.EMAIL
 const USENET_STREAMER = process.env.STREMIO_PORN_USENET_STREAMER
 const REAL_DEBRID_TOKEN = process.env.STREMIO_PORN_REAL_DEBRID_TOKEN
 const TORBOX_TOKEN = process.env.STREMIO_PORN_TORBOX_TOKEN
-const TORBOX_ENDPOINT = process.env.STREMIO_PORN_TORBOX_ENDPOINT
 const IS_PROD = process.env.NODE_ENV === 'production'
 
 
@@ -41,7 +40,6 @@ let clientOptions = {
   usenetStreamerUrl: USENET_STREAMER,
   realDebridToken: REAL_DEBRID_TOKEN,
   torboxToken: TORBOX_TOKEN,
-  torboxEndpoint: TORBOX_ENDPOINT,
 }
 let adapters = PornClient.getAdapters(clientOptions)
 let availableSites = adapters.map((a) => a.DISPLAY_NAME).join(', ')

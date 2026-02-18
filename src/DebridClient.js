@@ -3,8 +3,7 @@ class DebridClient {
     this.httpClient = httpClient
     this.realDebridToken = options.realDebridToken
     this.torboxToken = options.torboxToken
-    this.torboxEndpoint = options.torboxEndpoint ||
-      'https://api.torbox.app/v1/links/instant'
+    this.torboxEndpoint = 'https://api.torbox.app/v1/links/instant'
   }
 
   get isEnabled() {

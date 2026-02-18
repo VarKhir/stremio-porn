@@ -89,7 +89,6 @@ To configure the addon, set the following environment variables before running i
 - `STREMIO_PORN_USENET_STREAMER` — base URL to a compatible Usenet addon (e.g. `https://example.com/<token>`); trailing slashes are trimmed automatically and streams for IMDb/TMDb/TVDB/nzbdav (NZBDav history) ids will be proxied to that addon
 - `STREMIO_PORN_REAL_DEBRID_TOKEN` — optional Real-Debrid API token to unrestrict supported stream URLs
 - `STREMIO_PORN_TORBOX_TOKEN` — optional Torbox API token to unrestrict supported stream URLs
-- `STREMIO_PORN_TORBOX_ENDPOINT` — override Torbox API endpoint if it changes (defaults to `https://api.torbox.app/v1/links/instant`)
 
 
 The addon also respects environment variables commonly used by many hosting providers (e.g. Heroku):

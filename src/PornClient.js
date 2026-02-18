@@ -191,7 +191,6 @@ class PornClient {
     this.debridClient = new DebridClient(httpClient, {
       realDebridToken: options.realDebridToken,
       torboxToken: options.torboxToken,
-      torboxEndpoint: options.torboxEndpoint,
     })
     this.adapterClasses = PornClient.getAdapters(options)
     this.adapters = this.adapterClasses.map((Adapter) => {
