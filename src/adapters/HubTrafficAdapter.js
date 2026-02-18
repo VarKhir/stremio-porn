@@ -1,17 +1,16 @@
 import { URL } from 'url'
-import BaseAdapter from './BaseAdapter'
+import BaseAdapter from './BaseAdapter.js'
 
 
-// https://www.hubtraffic.com/
 class HubTrafficAdapter extends BaseAdapter {
   static SUPPORTED_TYPES = ['movie']
   static TAGS_TO_SKIP = []
   static VIDEO_ID_PARAMETER = 'video_id'
 
   _normalizeItem(item) {
-    let video = item.video || item
-    let { TAGS_TO_SKIP } = this.constructor
-    let tags = video.tags && Object.values(video.tags)
+    const video = item.video || item
+    const { TAGS_TO_SKIP } = this.constructor
+    const tags = video.tags && Object.values(video.tags)
       .map((tag) => {
         return (typeof tag === 'string') ? tag : tag.tag_name
       })
@@ -25,7 +24,7 @@ class HubTrafficAdapter extends BaseAdapter {
       banner: video.thumb,
       poster: video.thumb,
       posterShape: 'landscape',
-      year: video.publish_date && video.publish_date.split('-')[0],
+      year: video.publish_date?.split('-')[0],
       website: video.url,
       description: video.url,
       runtime: video.duration,
@@ -35,8 +34,8 @@ class HubTrafficAdapter extends BaseAdapter {
   }
 
   _normalizeStream(stream) {
-    let quality =
-      (stream.quality && stream.quality.trim()) || 'SD'
+    const quality =
+      (stream.quality?.trim()) || 'SD'
 
     return super._normalizeStream({
       ...stream,
@@ -59,7 +58,7 @@ class HubTrafficAdapter extends BaseAdapter {
   }
 
   async _requestApi(method, params) {
-    let options = {
+    const options = {
       json: true,
     }
     let url = this._makeMethodUrl(method)
@@ -73,12 +72,10 @@ class HubTrafficAdapter extends BaseAdapter {
       })
     }
 
-    let { body } = await this.httpClient.request(url, options)
+    const { body } = await this.httpClient.request(url, options)
 
-    // Ignore "No Videos found!"" and "No video with this ID." errors
-    // eslint-disable-next-line eqeqeq
-    if (body.code && body.code != 2001 && body.code != 2002) {
-      let err = new Error(body.message)
+    if (body.code && Number(body.code) !== 2001 && Number(body.code) !== 2002) {
+      const err = new Error(body.message)
       err.code = Number(body.code)
       throw err
     }
@@ -87,8 +84,8 @@ class HubTrafficAdapter extends BaseAdapter {
   }
 
   async _findByPage(query, page) {
-    let { ITEMS_PER_PAGE } = this.constructor
-    let newQuery = {
+    const { ITEMS_PER_PAGE } = this.constructor
+    const newQuery = {
       'tags[]': query.genre,
       search: query.search,
       period: 'weekly',
@@ -100,11 +97,10 @@ class HubTrafficAdapter extends BaseAdapter {
     let result = await this._requestApi('searchVideos', newQuery)
     let videos = result.videos || result.video || []
 
-    // We retry with the monthly period in case there are too few weekly videos
     if (!query.search && page === 1 && videos.length < ITEMS_PER_PAGE) {
       newQuery.period = 'monthly'
-      let result = await this._requestApi('searchVideos', newQuery)
-      let monthlyVideos = result.videos || result.video || []
+      result = await this._requestApi('searchVideos', newQuery)
+      const monthlyVideos = result.videos || result.video || []
       videos = videos.concat(monthlyVideos).slice(0, ITEMS_PER_PAGE)
     }
 
@@ -112,7 +108,7 @@ class HubTrafficAdapter extends BaseAdapter {
   }
 
   async _getItem(type, id) {
-    let query = {
+    const query = {
       [this.constructor.VIDEO_ID_PARAMETER]: id,
     }
 
@@ -120,11 +116,11 @@ class HubTrafficAdapter extends BaseAdapter {
   }
 
   async _getStreams(type, id) {
-    let url = this._makeEmbedUrl(id)
-    let { body } = await this.httpClient.request(url)
+    const url = this._makeEmbedUrl(id)
+    const { body } = await this.httpClient.request(url)
 
-    let streams = this._extractStreamsFromEmbed(body)
-    return streams && streams.map((stream) => {
+    const streams = this._extractStreamsFromEmbed(body)
+    return streams?.map((stream) => {
       stream.id = id
       return stream
     })

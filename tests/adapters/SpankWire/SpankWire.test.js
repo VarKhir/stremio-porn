@@ -1,9 +1,10 @@
 import { readFileSync } from 'fs'
-import testAdapter from '../testAdapter'
-import SpankWire from '../../../src/adapters/SpankWire'
+import { resolve } from 'path'
+import testAdapter from '../testAdapter.js'
+import SpankWire from '../../../src/adapters/SpankWire.js'
 
 
-const EMBED_PAGE = readFileSync(`${__dirname}/embeddedMoviePage.html`, 'utf8')
+const EMBED_PAGE = readFileSync(resolve(__dirname, 'embeddedMoviePage.html'), 'utf8')
 
 const ITEMS = [{
   id: '16838912',
@@ -27,8 +28,8 @@ describe('SpankWire', () => {
 
   describe('#_extractStreamsFromEmbed()', () => {
     test('retrieves a stream from a sample embedded movie page', () => {
-      let adapter = new SpankWire()
-      let results = adapter._extractStreamsFromEmbed(EMBED_PAGE)
+      const adapter = new SpankWire()
+      const results = adapter._extractStreamsFromEmbed(EMBED_PAGE)
 
       expect(results).toEqual([{
         quality: 'Normal',

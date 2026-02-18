@@ -1,4 +1,4 @@
-import BaseAdapter from './BaseAdapter'
+import BaseAdapter from './BaseAdapter.js'
 
 
 const BASE_URL = 'https://www.porn.com'
@@ -10,8 +10,8 @@ const SUPPORTED_TYPES = ['movie']
 
 function formatDuration(seconds) {
   seconds = Number(seconds)
-  let minutesString = Math.floor(seconds / 60)
-  let secondsString = `0${seconds % 60}`.slice(-2)
+  const minutesString = Math.floor(seconds / 60)
+  const secondsString = `0${seconds % 60}`.slice(-2)
   return `${minutesString}:${secondsString}`
 }
 
@@ -72,19 +72,19 @@ class PornCom extends BaseAdapter {
 
   _extractQualitiesFromEmbedPage(body) {
     return body
-      .match(/['"]?id['"]?:\s*['"]\d+p['"]/gi) // Find id:"240p"
-      .map((item) => item.match(/\d+/)[0]) // Extract 240
-      .filter((quality) => Number(quality) < 360) // 360+ are restricted
+      .match(/['"]?id['"]?:\s*['"]\d+p['"]/gi)
+      .map((item) => item.match(/\d+/)[0])
+      .filter((quality) => Number(quality) < 360)
   }
 
   async _getQualities(id) {
-    let embedUrl = this._makeEmbedUrl(id)
-    let { body } = await this.httpClient.request(embedUrl)
+    const embedUrl = this._makeEmbedUrl(id)
+    const { body } = await this.httpClient.request(embedUrl)
     return this._extractQualitiesFromEmbedPage(body)
   }
 
   async _findByPage(query, page) {
-    let options = {
+    const options = {
       json: true,
       query: {
         page,
@@ -93,23 +93,23 @@ class PornCom extends BaseAdapter {
         cats: query.genre,
       },
     }
-    let { body } = await this.httpClient.request(VIDEOS_API_URL, options)
+    const { body } = await this.httpClient.request(VIDEOS_API_URL, options)
     return this._parseApiResponse(body)
   }
 
   async _getItem(type, id) {
-    let options = {
+    const options = {
       json: true,
       query: { id, limit: 1 },
     }
-    let { body } = await this.httpClient.request(VIDEOS_API_URL, options)
+    const { body } = await this.httpClient.request(VIDEOS_API_URL, options)
     return this._parseApiResponse(body)[0]
   }
 
   async _getStreams(type, id) {
-    let qualities = await this._getQualities(id)
+    const qualities = await this._getQualities(id)
     return qualities.map((quality) => {
-      let url = this._makeDownloadUrl(id, quality)
+      const url = this._makeDownloadUrl(id, quality)
       return { id, url, quality }
     })
   }

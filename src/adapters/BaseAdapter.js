@@ -1,9 +1,6 @@
 import Bottleneck from 'bottleneck'
 
 
-// Contains some common methods as well as public wrappers
-// that prepare requests, redirect them to private methods
-// and normalize results
 class BaseAdapter {
   static SUPPORTED_TYPES = []
   static MAX_RESULTS_PER_REQUEST = 100
@@ -21,10 +18,10 @@ class BaseAdapter {
   }
 
   _normalizeStream(stream) {
-    let name = stream.name ||
+    const name = stream.name ||
       this.constructor.DISPLAY_NAME ||
       this.constructor.name
-    let titleParts = []
+    const titleParts = []
 
     if (stream.quality) {
       titleParts.push(stream.quality)
@@ -34,7 +31,7 @@ class BaseAdapter {
       titleParts.push(stream.title)
     }
 
-    let title = titleParts.length > 0 ?
+    const title = titleParts.length > 0 ?
       titleParts.join(' | ') :
       name
 
@@ -43,13 +40,14 @@ class BaseAdapter {
 
   _paginate(request) {
     let itemsPerPage = this.constructor.ITEMS_PER_PAGE || Infinity
-    let { skip = 0, limit = itemsPerPage } = request
+    const { skip = 0 } = request
+    let { limit = itemsPerPage } = request
     limit = Math.min(limit, this.constructor.MAX_RESULTS_PER_REQUEST)
     itemsPerPage = Math.min(itemsPerPage, limit)
 
-    let firstPage = Math.ceil((skip + 0.1) / itemsPerPage) || 1
-    let pageCount = Math.ceil(limit / itemsPerPage)
-    let pages = []
+    const firstPage = Math.ceil((skip + 0.1) / itemsPerPage) || 1
+    const pageCount = Math.ceil(limit / itemsPerPage)
+    const pages = []
 
     for (let i = firstPage; pages.length < pageCount; i++) {
       pages.push(i)
@@ -62,7 +60,7 @@ class BaseAdapter {
   }
 
   _validateRequest(request, typeRequired) {
-    let { SUPPORTED_TYPES } = this.constructor
+    const { SUPPORTED_TYPES } = this.constructor
 
     if (typeof request !== 'object') {
       throw new Error(`A request must be an object, ${typeof request} given`)
@@ -82,8 +80,8 @@ class BaseAdapter {
   }
 
   async _find(query, pagination) {
-    let { pages, limit, skipOnFirstPage } = pagination
-    let requests = pages.map((page) => {
+    const { pages, limit, skipOnFirstPage } = pagination
+    const requests = pages.map((page) => {
       return this._findByPage(query, page)
     })
 
@@ -95,7 +93,7 @@ class BaseAdapter {
   async find(request) {
     this._validateRequest(request)
 
-    let pagination = this._paginate(request)
+    const pagination = this._paginate(request)
     let { query } = request
 
     if (!query.type) {
@@ -105,22 +103,21 @@ class BaseAdapter {
       }
     }
 
-    let results = await this.scheduler.schedule(() => {
+    const results = await this.scheduler.schedule(() => {
       return this._find(query, pagination)
     })
 
     if (results) {
       return results.map((item) => this._normalizeItem(item))
-    } else {
-      return []
     }
+    return []
   }
 
   async getItem(request) {
     this._validateRequest(request, true)
 
-    let { type, id } = request.query
-    let result = await this.scheduler.schedule(() => {
+    const { type, id } = request.query
+    const result = await this.scheduler.schedule(() => {
       return this._getItem(type, id)
     })
     return result ? [this._normalizeItem(result)] : []
@@ -129,16 +126,15 @@ class BaseAdapter {
   async getStreams(request) {
     this._validateRequest(request, true)
 
-    let { type, id } = request.query
-    let results = await this.scheduler.schedule(() => {
+    const { type, id } = request.query
+    const results = await this.scheduler.schedule(() => {
       return this._getStreams(type, id)
     })
 
     if (results) {
       return results.map((stream) => this._normalizeStream(stream))
-    } else {
-      return []
     }
+    return []
   }
 }
 

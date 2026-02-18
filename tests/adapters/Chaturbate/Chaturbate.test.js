@@ -1,10 +1,11 @@
 import { readFileSync } from 'fs'
-import testAdapter from '../testAdapter'
-import Chaturbate from '../../../src/adapters/Chaturbate'
+import { resolve } from 'path'
+import testAdapter from '../testAdapter.js'
+import Chaturbate from '../../../src/adapters/Chaturbate.js'
 
 
-const LIST_PAGE = readFileSync(`${__dirname}/listPage.html`, 'utf8')
-const ITEM_PAGE = readFileSync(`${__dirname}/itemPage.html`, 'utf8')
+const LIST_PAGE = readFileSync(resolve(__dirname, 'listPage.html'), 'utf8')
+const ITEM_PAGE = readFileSync(resolve(__dirname, 'itemPage.html'), 'utf8')
 
 const ITEMS = [{
   id: 'minksky',
@@ -28,8 +29,8 @@ describe('Chaturbate', () => {
 
   describe('#_parseItemPage()', () => {
     test('retrieves the item object from the sample item page', () => {
-      let adapter = new Chaturbate()
-      let result = adapter._parseItemPage(ITEM_PAGE)
+      const adapter = new Chaturbate()
+      const result = adapter._parseItemPage(ITEM_PAGE)
 
       expect(result).toEqual({
         id: 'fuckable_18',
@@ -43,8 +44,8 @@ describe('Chaturbate', () => {
 
   describe('#_parseListPage()', () => {
     test('retrieves an array of items from the sample list page', () => {
-      let adapter = new Chaturbate()
-      let results = adapter._parseListPage(LIST_PAGE)
+      const adapter = new Chaturbate()
+      const results = adapter._parseListPage(LIST_PAGE)
 
       expect(results).toHaveLength(72)
       expect(results[0]).toEqual({

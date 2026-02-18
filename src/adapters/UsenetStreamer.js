@@ -1,7 +1,6 @@
-import BaseAdapter from './BaseAdapter'
+import BaseAdapter from './BaseAdapter.js'
 
 
-// Stream-only adapter that proxies IMDb/TMDb/TVDB/NZBDav ids to a Usenet streamer
 class UsenetStreamer extends BaseAdapter {
   static DISPLAY_NAME = 'Usenet'
   static SUPPORTED_TYPES = ['movie', 'tv']
@@ -30,7 +29,6 @@ class UsenetStreamer extends BaseAdapter {
   }
 
   async _findByPage() {
-    // UsenetStreamer does not expose catalogs; discovery is handled by other adapters.
     return []
   }
 
@@ -43,7 +41,7 @@ class UsenetStreamer extends BaseAdapter {
       return []
     }
 
-    let url = `${this.baseUrl}/stream/${type}/${encodeURIComponent(id)}.json`
+    const url = `${this.baseUrl}/stream/${type}/${encodeURIComponent(id)}.json`
     let body
 
     try {
@@ -60,7 +58,7 @@ class UsenetStreamer extends BaseAdapter {
       return []
     }
 
-    let streams = body.streams
+    const streams = body.streams
 
     return Array.isArray(streams) ? streams : []
   }

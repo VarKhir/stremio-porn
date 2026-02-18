@@ -1,5 +1,6 @@
 wip
 node_modules
+dist
 .DS_Store
 Thumbs.db
 .idea

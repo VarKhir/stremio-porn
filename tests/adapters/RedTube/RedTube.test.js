@@ -1,9 +1,10 @@
 import { readFileSync } from 'fs'
-import testAdapter from '../testAdapter'
-import RedTube from '../../../src/adapters/RedTube'
+import { resolve } from 'path'
+import testAdapter from '../testAdapter.js'
+import RedTube from '../../../src/adapters/RedTube.js'
 
 
-const EMBED_PAGE = readFileSync(`${__dirname}/embeddedVideoPage.html`, 'utf8')
+const EMBED_PAGE = readFileSync(resolve(__dirname, 'embeddedVideoPage.html'), 'utf8')
 
 const ITEMS = [{
   id: 1,
@@ -27,8 +28,8 @@ describe('RedTube', () => {
 
   describe('#_extractStreamsFromEmbed()', () => {
     test('retrieves a stream from a sample embedded video page', () => {
-      let adapter = new RedTube()
-      let result = adapter._extractStreamsFromEmbed(EMBED_PAGE)
+      const adapter = new RedTube()
+      const result = adapter._extractStreamsFromEmbed(EMBED_PAGE)
 
       expect(result).toEqual([{
         quality: '480p',

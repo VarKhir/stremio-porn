@@ -1,25 +1,19 @@
 import cacheManager from 'cache-manager'
 import redisStore from 'cache-manager-redis-store'
-import HttpClient from './HttpClient'
-import DebridClient from './DebridClient'
-import PornHub from './adapters/PornHub'
-import RedTube from './adapters/RedTube'
-import YouPorn from './adapters/YouPorn'
-import SpankWire from './adapters/SpankWire'
-import PornCom from './adapters/PornCom'
-import Chaturbate from './adapters/Chaturbate'
-import UsenetStreamer from './adapters/UsenetStreamer'
-
-// EPorner has restricted video downloads to 30 per day per guest
-// import EPorner from './adapters/EPorner'
+import HttpClient from './HttpClient.js'
+import DebridClient from './DebridClient.js'
+import PornHub from './adapters/PornHub.js'
+import RedTube from './adapters/RedTube.js'
+import YouPorn from './adapters/YouPorn.js'
+import SpankWire from './adapters/SpankWire.js'
+import PornCom from './adapters/PornCom.js'
+import Chaturbate from './adapters/Chaturbate.js'
+import UsenetStreamer from './adapters/UsenetStreamer.js'
 
 
 const ID = 'porn_id'
 const SORT_PROP_PREFIX = 'popularities.porn.'
 const CACHE_PREFIX = 'stremio-porn|'
-// Making multiple requests to multiple adapters for different types
-// and then aggregating them is a lot of work,
-// so we only support 1 adapter per request for now.
 const MAX_ADAPTERS_PER_REQUEST = 1
 const BASE_ADAPTERS = [PornHub, RedTube, YouPorn, SpankWire, PornCom, Chaturbate]
 const isUsenetAdapter = (adapter, includeClass = false) => {
@@ -96,12 +90,13 @@ function makePornId(adapter, type, id) {
 }
 
 function parsePornId(pornId) {
-  let [adapter, type, id] = pornId.split(':').pop().split('-')
+  const [adapter, type, id] = pornId.split(':').pop().split('-')
   return { adapter, type, id }
 }
 
 function normalizeRequest(request) {
-  let { query, sort, limit, skip } = request
+  let { query } = request
+  const { sort, limit, skip } = request
   let adapters = []
 
   if (sort) {
@@ -119,7 +114,7 @@ function normalizeRequest(request) {
   }
 
   if (query.porn_id) {
-    let { adapter, type, id } = parsePornId(query.porn_id)
+    const { adapter, type, id } = parsePornId(query.porn_id)
 
     if (type && query.type && type !== query.type) {
       throw new Error(
@@ -142,7 +137,7 @@ function normalizeRequest(request) {
 }
 
 function normalizeResult(adapter, item, idProp = 'id') {
-  let newItem = { ...item }
+  const newItem = { ...item }
   newItem[idProp] = makePornId(adapter.constructor.name, item.type, item.id)
   return newItem
 }
@@ -159,7 +154,7 @@ function mergeResults(results) {
 class PornClient {
   static ID = ID
   static getAdapters(options = {}) {
-    let adapters = [...BASE_ADAPTERS]
+    const adapters = [...BASE_ADAPTERS]
 
     if (options.usenetStreamerUrl) {
       adapters.push(UsenetStreamer)
@@ -177,7 +172,7 @@ class PornClient {
   }
 
   static getIdPrefixes(options = {}, adapters = this.getAdapters(options)) {
-    let prefixes = []
+    const prefixes = []
 
     if (options.usenetStreamerUrl && adapters.some((adapter) => isUsenetAdapter(adapter, true))) {
       prefixes.push(...UsenetStreamer.ID_PREFIXES)
@@ -187,7 +182,7 @@ class PornClient {
   }
 
   constructor(options) {
-    let httpClient = new HttpClient(options)
+    const httpClient = new HttpClient(options)
     this.debridClient = new DebridClient(httpClient, {
       realDebridToken: options.realDebridToken,
       torboxToken: options.torboxToken,
@@ -216,8 +211,8 @@ class PornClient {
   }
 
   _getAdaptersForRequest(request, adapterMethod) {
-    let { query, adapters } = request
-    let { type } = query
+    const { query, adapters } = request
+    const { type } = query
     let matchingAdapters = this.adapters
 
     if (adapters.length) {
@@ -233,7 +228,7 @@ class PornClient {
     }
 
     if (adapterMethod === 'getStreams') {
-      let usenetAdapter = (query.id && matchingAdapters.find((adapter) => {
+      const usenetAdapter = (query.id && matchingAdapters.find((adapter) => {
         return isUsenetAdapter(adapter) && adapter.supportsId(query.id)
       })) || null
 
@@ -259,17 +254,17 @@ class PornClient {
 
   // Aggregate method that dispatches requests to matching adapters
   async _invokeMethod(adapterMethod, rawRequest, idProp) {
-    let request = normalizeRequest(rawRequest)
-    let adapters = this._getAdaptersForRequest(request, adapterMethod)
+    const request = normalizeRequest(rawRequest)
+    const adapters = this._getAdaptersForRequest(request, adapterMethod)
 
     if (!adapters.length) {
       throw new Error('Couldn\'t find suitable adapters for a request')
     }
 
-    let results = []
+    const results = []
 
-    for (let adapter of adapters) {
-      let adapterResults = await this._invokeAdapterMethod(
+    for (const adapter of adapters) {
+      const adapterResults = await this._invokeAdapterMethod(
         adapter, adapterMethod, request, idProp
       )
       results.push(adapterResults)
@@ -281,22 +276,20 @@ class PornClient {
   // This is a public wrapper around the private method
   // that implements caching and result normalization
   async invokeMethod(methodName, rawRequest) {
-    let { adapterMethod, cacheTtl, idProp, expectsArray } = METHODS[methodName]
-    let invokeMethod = async () => {
-      let result = await this._invokeMethod(adapterMethod, rawRequest, idProp)
-      result = expectsArray ? result : result[0]
-      return result
+    const { adapterMethod, cacheTtl, idProp, expectsArray } = METHODS[methodName]
+    const invokeMethod = async () => {
+      const result = await this._invokeMethod(adapterMethod, rawRequest, idProp)
+      return expectsArray ? result : result[0]
     }
 
     if (this.cache) {
-      let cacheKey = CACHE_PREFIX + JSON.stringify(rawRequest)
-      let cacheOptions = {
+      const cacheKey = CACHE_PREFIX + JSON.stringify(rawRequest)
+      const cacheOptions = {
         ttl: cacheTtl,
       }
       return this.cache.wrap(cacheKey, invokeMethod, cacheOptions)
-    } else {
-      return invokeMethod()
     }
+    return invokeMethod()
   }
 }
 

@@ -12,14 +12,14 @@ const DEFAULT_REQUEST_OPTIONS = {
 
 
 class HttpClient {
-  baseRequestOptions = {
-    ...DEFAULT_REQUEST_OPTIONS,
-  }
-
   constructor(options = {}) {
+    this.baseRequestOptions = {
+      ...DEFAULT_REQUEST_OPTIONS,
+    }
+
     if (options.proxy) {
-      let [host, port] = options.proxy.split(':')
-      let agentOptions = { host, port, secureProxy: true }
+      const [host, port] = options.proxy.split(':')
+      const agentOptions = { host, port, secureProxy: true }
 
       this.baseRequestOptions.agent = {
         http: new HttpProxyAgent(agentOptions),

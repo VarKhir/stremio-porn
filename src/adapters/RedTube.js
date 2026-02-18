@@ -1,9 +1,9 @@
-import HubTrafficAdapter from './HubTrafficAdapter'
+import HubTrafficAdapter from './HubTrafficAdapter.js'
 
 
 class RedTube extends HubTrafficAdapter {
   static DISPLAY_NAME = 'RedTube'
-  static TAGS_TO_SKIP = ['teens'] // For some reason Teens doesn't work properly
+  static TAGS_TO_SKIP = ['teens']
   static ITEMS_PER_PAGE = 20
 
   _makeMethodUrl(method) {
@@ -15,22 +15,18 @@ class RedTube extends HubTrafficAdapter {
   }
 
   _extractStreamsFromEmbed(body) {
-    /* eslint-disable max-len */
-    // URL example:
-    // https://ce.rdtcdn.com/media/videos/201803/12/4930561/480P_600K_4930561.mp4?a5dcae8e1adc0bdaed975f0...
-    let regexp = /videoUrl["']?\s*:\s*["']?(https?:\\?\/\\?\/[a-z_-]+\.rdtcdn\.com[^"']+)/gi
-    /* eslint-enable max-len */
-    let urlMatches = regexp.exec(body)
+    const regexp = /videoUrl["']?\s*:\s*["']?(https?:\\?\/\\?\/[a-z_-]+\.rdtcdn\.com[^"']+)/gi
+    const urlMatches = regexp.exec(body)
 
-    if (!urlMatches || !urlMatches[1]) {
+    if (!urlMatches?.[1]) {
       throw new Error('Unable to extract a stream URL from an embed page')
     }
 
     let url = urlMatches[1]
-      .replace(/[\\/]+/g, '/') // Normalize the slashes...
-      .replace(/(https?:\/)/, '$1/') // ...but keep the // after "https:"
-    let qualityMatch = url.match(/\/(\d+p)/i)
-    let quality = qualityMatch && qualityMatch[1].toLowerCase()
+      .replace(/[\\/]+/g, '/')
+      .replace(/(https?:\/)/, '$1/')
+    const qualityMatch = url.match(/\/(\d+p)/i)
+    const quality = qualityMatch && qualityMatch[1].toLowerCase()
 
     if (url[0] === '/') {
       url = `https:/${url}`

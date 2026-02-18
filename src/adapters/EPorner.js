@@ -1,6 +1,6 @@
 import { xml2js } from 'xml-js'
-import cheerio from 'cheerio'
-import BaseAdapter from './BaseAdapter'
+import * as cheerio from 'cheerio'
+import BaseAdapter from './BaseAdapter.js'
 
 
 const BASE_URL = 'https://www.eporner.com'
@@ -14,14 +14,14 @@ class EPorner extends BaseAdapter {
   static ITEMS_PER_PAGE = ITEMS_PER_PAGE
 
   _normalizePageItem(item) {
-    let id = item.url.split('/')[4]
-    let duration = item.duration && item.duration
+    const id = item.url.split('/')[4]
+    const duration = item.duration && item.duration
       .replace('M', ':')
       .replace(/[TS]/gi, '')
 
     return {
       type: 'movie',
-      id: id,
+      id,
       name: item.title,
       genre: item.tags,
       banner: item.image,
@@ -35,7 +35,7 @@ class EPorner extends BaseAdapter {
   }
 
   _normalizeApiItem(item) {
-    let tags = item.keywords && item.keywords._text
+    const tags = item.keywords && item.keywords._text
       .split(',')
       .slice(1)
       .map((keyword) => keyword.trim())
@@ -68,7 +68,7 @@ class EPorner extends BaseAdapter {
   }
 
   _normalizeStream(stream) {
-    let quality = stream.url.match(/-(\d+)p/i)
+    const quality = stream.url.match(/-(\d+)p/i)
 
     return super._normalizeStream({
       id: stream.id,
@@ -81,7 +81,7 @@ class EPorner extends BaseAdapter {
   }
 
   _makeApiUrl(query, skip, limit) {
-    let { search, genre } = query
+    const { search, genre } = query
     let keywords
 
     if (search && genre) {
@@ -103,7 +103,7 @@ class EPorner extends BaseAdapter {
   }
 
   _parseApiResponse(xml) {
-    let results = xml2js(xml, {
+    const results = xml2js(xml, {
       compact: true,
       trim: true,
     })['eporner-data'].movie
@@ -112,29 +112,28 @@ class EPorner extends BaseAdapter {
       return []
     } else if (!Array.isArray(results)) {
       return [results]
-    } else {
-      return results
     }
+    return results
   }
 
   _parseMoviePage(body) {
-    let $ = cheerio.load(body)
-    let title = $('meta[property="og:title"]')
+    const $ = cheerio.load(body)
+    const title = $('meta[property="og:title"]')
       .attr('content')
       .replace(/(\s*-\s*)?EPORNER/i, '')
-    let description = $('meta[property="og:description"]').attr('content')
-    let duration = description.match(/duration:\s*((:?\d)+)/i)[1]
-    let url = $('meta[property="og:url"]').attr('content')
-    let image = $('meta[property="og:image"]').attr('content')
-    let tags = $('#hd-porn-tags td')
+    const description = $('meta[property="og:description"]').attr('content')
+    const duration = description.match(/duration:\s*((:?\d)+)/i)[1]
+    const url = $('meta[property="og:url"]').attr('content')
+    const image = $('meta[property="og:image"]').attr('content')
+    const tags = $('#hd-porn-tags td')
       .filter((i, item) => $(item).text().trim() === 'Tags:')
       .next()
       .find('a')
       .map((i, item) => $(item).text().trim())
       .toArray()
-    let downloadUrls = $('#hd-porn-dload a')
+    const downloadUrls = $('#hd-porn-dload a')
       .map((i, link) => {
-        let href = $(link).attr('href')
+        const href = $(link).attr('href')
         return this._makeVideoDownloadUrl(href)
       })
       .toArray()
@@ -146,26 +145,24 @@ class EPorner extends BaseAdapter {
   }
 
   async _find(query, { skip, limit }) {
-    let url = this._makeApiUrl(query, skip, limit)
-    let { body } = await this.httpClient.request(url)
+    const url = this._makeApiUrl(query, skip, limit)
+    const { body } = await this.httpClient.request(url)
     return this._parseApiResponse(body)
   }
 
   async _getItem(type, id) {
-    let url = this._makeMovieUrl(id)
-    let { body } = await this.httpClient.request(url)
+    const url = this._makeMovieUrl(id)
+    const { body } = await this.httpClient.request(url)
     return this._parseMoviePage(body)
   }
 
   async _getStreams(type, id) {
-    // Video downloads are restricted to 30 per day per guest
+    const url = this._makeMovieUrl(id)
+    const { body } = await this.httpClient.request(url)
+    const { downloadUrls } = this._parseMoviePage(body)
 
-    let url = this._makeMovieUrl(id)
-    let { body } = await this.httpClient.request(url)
-    let { downloadUrls } = this._parseMoviePage(body)
-
-    let streamUrls = downloadUrls.map((url) => {
-      return this.httpClient.request(url, { followRedirect: false })
+    let streamUrls = downloadUrls.map((downloadUrl) => {
+      return this.httpClient.request(downloadUrl, { followRedirect: false })
     })
     streamUrls = await Promise.all(streamUrls)
 

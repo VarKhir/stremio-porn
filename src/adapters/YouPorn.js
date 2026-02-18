@@ -1,4 +1,4 @@
-import HubTrafficAdapter from './HubTrafficAdapter'
+import HubTrafficAdapter from './HubTrafficAdapter.js'
 
 
 class YouPorn extends HubTrafficAdapter {
@@ -6,7 +6,7 @@ class YouPorn extends HubTrafficAdapter {
   static ITEMS_PER_PAGE = 29
 
   _makeMethodUrl(method) {
-    let methodAliases = {
+    const methodAliases = {
       searchVideos: 'search',
       getVideoById: 'video_by_id',
     }
@@ -18,25 +18,21 @@ class YouPorn extends HubTrafficAdapter {
   }
 
   _extractStreamsFromEmbed(body) {
-    /* eslint-disable max-len */
-    // URL example:
-    // https:\/\/ee.ypncdn.com\/201709\/01\/14062051\/720p_1500k_14062051\/YouPorn_-_mia-khalifa-big-tits-arab-pornstar-takes-a-fan-s-virginity.mp4?rate=193k&burst=1400k&validfrom=1524765800&validto=1524780200&hash=EGRxkAOZwod648gfnITHeyb%2Fzi8%3D
-    let regexp = /videoUrl["']?\s*:\s*["']?(https?:\\?\/\\?\/[a-z]+\.ypncdn\.com[^"']+)/gi
-    /* eslint-enable max-len */
+    const regexp = /videoUrl["']?\s*:\s*["']?(https?:\\?\/\\?\/[a-z]+\.ypncdn\.com[^"']+)/gi
 
-    let urlMatches = body.match(regexp)
+    const urlMatches = body.match(regexp)
 
-    if (!urlMatches || !urlMatches.length) {
+    if (!urlMatches?.length) {
       throw new Error('Unable to extract streams from an embed page')
     }
 
     return urlMatches.map((item) => {
       let url = item
-        .match(/http.+/)[0] // Extract the URL
-        .replace(/[\\/]+/g, '/') // Normalize the slashes...
-        .replace(/(https?:\/)/, '$1/') // ...but keep the // after "https:"
-      let qualityMatch = url.match(/\/(\d+p)/i)
-      let quality = qualityMatch && qualityMatch[1].toLowerCase()
+        .match(/http.+/)[0]
+        .replace(/[\\/]+/g, '/')
+        .replace(/(https?:\/)/, '$1/')
+      const qualityMatch = url.match(/\/(\d+p)/i)
+      const quality = qualityMatch && qualityMatch[1].toLowerCase()
 
       if (url[0] === '/') {
         url = `https:/${url}`
