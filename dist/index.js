@@ -45,8 +45,9 @@ let clientOptions = {
   usenetStreamerUrl: USENET_STREAMER
 };
 
-let availableSites = _PornClient.default.getAdapters(clientOptions).map(a => a.DISPLAY_NAME).join(', ');
+let adapters = _PornClient.default.getAdapters(clientOptions);
 
+let availableSites = adapters.map(a => a.DISPLAY_NAME).join(', ');
 const MANIFEST = {
   name: 'Porn',
   id: ID,
@@ -58,11 +59,11 @@ Watch porn videos and webcam streams from ${availableSites}\
   types: ['movie', 'tv'],
   idProperty: _PornClient.default.ID,
   dontAnnounce: !IS_PROD,
-  sorts: _PornClient.default.getSorts(clientOptions),
-  catalogs: _PornClient.default.getCatalogs(clientOptions),
+  sorts: _PornClient.default.getSorts(clientOptions, adapters),
+  catalogs: _PornClient.default.getCatalogs(clientOptions, adapters),
   resources: ['stream', 'meta', 'catalog'],
   // Stremio manifest allows advertising supported external id prefixes for stream requests
-  idPrefixes: _PornClient.default.getIdPrefixes(clientOptions),
+  idPrefixes: _PornClient.default.getIdPrefixes(clientOptions, adapters),
   // The docs mention `contactEmail`, but the template uses `email`
   email: EMAIL,
   contactEmail: EMAIL,

@@ -18,12 +18,7 @@ class UsenetStreamer extends BaseAdapter {
       return false
     }
 
-    let escapedPrefixes = this.constructor.ID_PREFIXES.map((prefix) => {
-      return prefix.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
-    })
-
-    let regex = new RegExp(`^(${escapedPrefixes.join('|')})(:)?`, 'i')
-    return regex.test(id)
+    return this.constructor.ID_REGEX.test(id)
   }
 
   _normalizeStream(stream) {
@@ -70,6 +65,14 @@ class UsenetStreamer extends BaseAdapter {
     return Array.isArray(streams) ? streams : []
   }
 }
+
+UsenetStreamer.ESCAPED_ID_PREFIXES = UsenetStreamer.ID_PREFIXES.map((prefix) => {
+  return prefix.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+})
+UsenetStreamer.ID_REGEX = new RegExp(
+  `^(${UsenetStreamer.ESCAPED_ID_PREFIXES.join('|')})(:)?`,
+  'i'
+)
 
 
 export default UsenetStreamer

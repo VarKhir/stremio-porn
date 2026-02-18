@@ -166,18 +166,18 @@ class PornClient {
     return adapters
   }
 
-  static getSorts(options = {}) {
-    return buildSorts(this.getAdapters(options))
+  static getSorts(options = {}, adapters = this.getAdapters(options)) {
+    return buildSorts(adapters)
   }
 
-  static getCatalogs(options = {}) {
-    return buildCatalogs(this.getAdapters(options))
+  static getCatalogs(options = {}, adapters = this.getAdapters(options)) {
+    return buildCatalogs(adapters)
   }
 
-  static getIdPrefixes(options = {}) {
+  static getIdPrefixes(options = {}, adapters = this.getAdapters(options)) {
     let prefixes = []
 
-    if (options.usenetStreamerUrl) {
+    if (options.usenetStreamerUrl && adapters.some((adapter) => isUsenetAdapter(adapter, true))) {
       prefixes.push(...UsenetStreamer.ID_PREFIXES)
     }
 
@@ -214,8 +214,6 @@ class PornClient {
     let { type } = query
     let matchingAdapters = this.adapters
 
-    let usenetAdapters = matchingAdapters.filter((adapter) => isUsenetAdapter(adapter))
-
     if (adapters.length) {
       matchingAdapters = matchingAdapters.filter((adapter) => {
         return adapters.includes(adapter.constructor.name)
@@ -228,11 +226,14 @@ class PornClient {
       })
     }
 
-    if (adapterMethod === 'getStreams' && usenetAdapters.length && query.id) {
-      let usenetAdapter = usenetAdapters.find((adapter) => adapter.supportsId(query.id))
-      matchingAdapters = usenetAdapter ? [usenetAdapter] : matchingAdapters.filter((adapter) => {
-        return !isUsenetAdapter(adapter)
-      })
+    if (adapterMethod === 'getStreams') {
+      let usenetAdapter = (query.id && matchingAdapters.find((adapter) => {
+        return isUsenetAdapter(adapter) && adapter.supportsId(query.id)
+      })) || null
+
+      matchingAdapters = usenetAdapter ?
+        [usenetAdapter] :
+        matchingAdapters.filter((adapter) => !isUsenetAdapter(adapter))
     } else {
       matchingAdapters = matchingAdapters.filter((adapter) => !isUsenetAdapter(adapter))
     }
