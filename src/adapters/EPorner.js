@@ -161,8 +161,8 @@ class EPorner extends BaseAdapter {
     const { body } = await this.httpClient.request(url)
     const { downloadUrls } = this._parseMoviePage(body)
 
-    let streamUrls = downloadUrls.map((dlUrl) => {
-      return this.httpClient.request(dlUrl, { followRedirect: false })
+    let streamUrls = downloadUrls.map((downloadUrl) => {
+      return this.httpClient.request(downloadUrl, { followRedirect: false })
     })
     streamUrls = await Promise.all(streamUrls)
 
