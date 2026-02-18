@@ -21,11 +21,24 @@ class BaseAdapter {
   }
 
   _normalizeStream(stream) {
-    if (stream.name) {
-      return stream
-    } else {
-      return { ...stream, name: this.constructor.name }
+    let name = stream.name ||
+      this.constructor.DISPLAY_NAME ||
+      this.constructor.name
+    let titleParts = []
+
+    if (stream.quality) {
+      titleParts.push(stream.quality)
     }
+
+    if (stream.title && stream.title !== name) {
+      titleParts.push(stream.title)
+    }
+
+    let title = titleParts.length > 0 ?
+      titleParts.join(' | ') :
+      name
+
+    return { ...stream, name, title }
   }
 
   _paginate(request) {

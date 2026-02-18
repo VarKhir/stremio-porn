@@ -35,14 +35,12 @@ class HubTrafficAdapter extends BaseAdapter {
   }
 
   _normalizeStream(stream) {
-    let title =
-      (stream.title && stream.title.trim()) ||
-      (stream.quality && stream.quality.trim()) ||
-      'SD'
+    let quality =
+      (stream.quality && stream.quality.trim()) || 'SD'
 
     return super._normalizeStream({
       ...stream,
-      title,
+      quality,
       availability: 1,
       isFree: 1,
     })

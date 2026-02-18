@@ -158,10 +158,22 @@ class DebridClient {
       let directUrl = yield _this4._unrestrictWithRealDebrid(url);
 
       if (directUrl) {
-        return directUrl;
+        return {
+          url: directUrl,
+          service: 'RD'
+        };
       }
 
-      return _this4._unrestrictWithTorbox(url);
+      directUrl = yield _this4._unrestrictWithTorbox(url);
+
+      if (directUrl) {
+        return {
+          url: directUrl,
+          service: 'TB'
+        };
+      }
+
+      return null;
     })();
   }
 
@@ -181,12 +193,13 @@ class DebridClient {
             return stream;
           }
 
-          let unrestrictedUrl = yield _this5._unrestrict(stream.url);
+          let result = yield _this5._unrestrict(stream.url);
 
-          if (unrestrictedUrl && unrestrictedUrl !== stream.url) {
+          if (result && result.url !== stream.url) {
+            let tag = result.service === 'TB' ? '[TB] ⚡' : `[${result.service}]`;
             return _objectSpread({}, stream, {
-              url: unrestrictedUrl,
-              name: stream.name || 'Debrid'
+              url: result.url,
+              name: `${tag} ${stream.name || 'Debrid'}`
             });
           } else {
             return stream;

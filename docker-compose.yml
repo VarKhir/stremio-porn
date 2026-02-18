@@ -14,8 +14,6 @@ services:
       - STREMIO_PORN_PROXY=${STREMIO_PORN_PROXY:-}
       - STREMIO_PORN_CACHE=redis://redis:6379
       - STREMIO_PORN_USENET_STREAMER=${STREMIO_PORN_USENET_STREAMER:-}
-      - STREMIO_PORN_REAL_DEBRID_TOKEN=${STREMIO_PORN_REAL_DEBRID_TOKEN:-}
-      - STREMIO_PORN_TORBOX_TOKEN=${STREMIO_PORN_TORBOX_TOKEN:-}
     depends_on:
       redis:
         condition: service_healthy

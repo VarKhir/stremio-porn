@@ -49,7 +49,7 @@ class PornCom extends _BaseAdapter.default {
     return super._normalizeStream({
       id: stream.id,
       url: stream.url,
-      title: `${stream.quality}p`,
+      quality: `${stream.quality}p`,
       availability: 1,
       live: true,
       isFree: true
