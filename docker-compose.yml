@@ -1,0 +1,42 @@
+services:
+  stremio-porn:
+    build: .
+    container_name: stremio-porn
+    restart: unless-stopped
+    ports:
+      - "${STREMIO_PORN_PORT:-8080}:${STREMIO_PORN_PORT:-8080}"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - STREMIO_PORN_ID=${STREMIO_PORN_ID:-stremio_porn}
+      - STREMIO_PORN_ENDPOINT=${STREMIO_PORN_ENDPOINT:-http://localhost:8080}
+      - STREMIO_PORN_PORT=${STREMIO_PORN_PORT:-8080}
+      - STREMIO_PORN_EMAIL=${STREMIO_PORN_EMAIL:-}
+      - STREMIO_PORN_PROXY=${STREMIO_PORN_PROXY:-}
+      - STREMIO_PORN_CACHE=redis://redis:6379
+      - STREMIO_PORN_USENET_STREAMER=${STREMIO_PORN_USENET_STREAMER:-}
+      - STREMIO_PORN_REAL_DEBRID_TOKEN=${STREMIO_PORN_REAL_DEBRID_TOKEN:-}
+      - STREMIO_PORN_TORBOX_TOKEN=${STREMIO_PORN_TORBOX_TOKEN:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:${STREMIO_PORN_PORT:-8080}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: stremio-porn-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  redis-data:

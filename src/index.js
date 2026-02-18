@@ -113,6 +113,24 @@ let client = new PornClient(clientOptions)
 let methods = makeMethods(client, SUPPORTED_METHODS)
 let addon = new Stremio.Server(methods, MANIFEST)
 let server = http.createServer((req, res) => {
+  if (req.url === '/api/status') {
+    let status = {
+      manifest: {
+        name: MANIFEST.name,
+        version: MANIFEST.version,
+        description: MANIFEST.description,
+        catalogs: MANIFEST.catalogs,
+        dontAnnounce: MANIFEST.dontAnnounce,
+      },
+      config: {
+        cache: CACHE !== '0',
+        proxy: !!PROXY,
+      },
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify(status))
+    return
+  }
   serveStatic(STATIC_DIR)(req, res, () => {
     addon.middleware(req, res, () => res.end())
   })
