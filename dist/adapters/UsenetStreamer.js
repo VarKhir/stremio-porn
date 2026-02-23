@@ -9,8 +9,6 @@ var _BaseAdapter = _interopRequireDefault(require("./BaseAdapter"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } } function _next(value) { step("next", value); } function _throw(err) { step("throw", err); } _next(); }); }; }
-
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -37,52 +35,44 @@ class UsenetStreamer extends _BaseAdapter.default {
     }));
   }
 
-  _findByPage() {
-    return _asyncToGenerator(function* () {
-      // UsenetStreamer does not expose catalogs; discovery is handled by other adapters.
+  async _findByPage() {
+    // UsenetStreamer does not expose catalogs; discovery is handled by other adapters.
+    return [];
+  }
+
+  async _getItem() {
+    return null;
+  }
+
+  async _getStreams(type, id) {
+    if (!this.baseUrl) {
       return [];
-    })();
-  }
+    }
 
-  _getItem() {
-    return _asyncToGenerator(function* () {
-      return null;
-    })();
-  }
+    let url = `${this.baseUrl}/stream/${type}/${encodeURIComponent(id)}.json`;
+    let body;
 
-  _getStreams(type, id) {
-    var _this = this;
+    try {
+      ;
+      ({
+        body
+      } = await this.httpClient.request(url, {
+        json: true
+      }));
+    } catch (err) {
+      return [];
+    }
 
-    return _asyncToGenerator(function* () {
-      if (!_this.baseUrl) {
-        return [];
-      }
+    if (Array.isArray(body)) {
+      return body;
+    }
 
-      let url = `${_this.baseUrl}/stream/${type}/${encodeURIComponent(id)}.json`;
-      let body;
+    if (!body || typeof body !== 'object') {
+      return [];
+    }
 
-      try {
-        ;
-        ({
-          body
-        } = yield _this.httpClient.request(url, {
-          json: true
-        }));
-      } catch (err) {
-        return [];
-      }
-
-      if (Array.isArray(body)) {
-        return body;
-      }
-
-      if (!body || typeof body !== 'object') {
-        return [];
-      }
-
-      let streams = body.streams;
-      return Array.isArray(streams) ? streams : [];
-    })();
+    let streams = body.streams;
+    return Array.isArray(streams) ? streams : [];
   }
 
 }

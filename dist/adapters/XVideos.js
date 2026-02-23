@@ -13,8 +13,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } } function _next(value) { step("next", value); } function _throw(err) { step("throw", err); } _next(); }); }; }
-
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 const BASE_URL = 'https://www.xvideos.com';
@@ -107,67 +105,55 @@ class XVideos extends _BaseAdapter.default {
     return streams;
   }
 
-  _findByPage(query, page) {
-    var _this = this;
+  async _findByPage(query, page) {
+    let url;
 
-    return _asyncToGenerator(function* () {
-      let url;
+    if (query.search) {
+      let encoded = encodeURIComponent(query.search);
+      url = `${BASE_URL}/?k=${encoded}&p=${page - 1}`;
+    } else if (query.genre) {
+      let encoded = encodeURIComponent(query.genre);
+      url = `${BASE_URL}/c/${encoded}/${page - 1}`;
+    } else {
+      url = page > 1 ? `${BASE_URL}/new/${page - 1}` : `${BASE_URL}/new`;
+    }
 
-      if (query.search) {
-        let encoded = encodeURIComponent(query.search);
-        url = `${BASE_URL}/?k=${encoded}&p=${page - 1}`;
-      } else if (query.genre) {
-        let encoded = encodeURIComponent(query.genre);
-        url = `${BASE_URL}/c/${encoded}/${page - 1}`;
-      } else {
-        url = page > 1 ? `${BASE_URL}/new/${page - 1}` : `${BASE_URL}/new`;
-      }
-
-      let {
-        body
-      } = yield _this.httpClient.request(url);
-      return _this._parseSearchResults(body);
-    })();
+    let {
+      body
+    } = await this.httpClient.request(url);
+    return this._parseSearchResults(body);
   }
 
-  _getItem(type, id) {
-    var _this2 = this;
+  async _getItem(type, id) {
+    let url = `${BASE_URL}/${id}`;
+    let {
+      body
+    } = await this.httpClient.request(url);
 
-    return _asyncToGenerator(function* () {
-      let url = `${BASE_URL}/${id}`;
-      let {
-        body
-      } = yield _this2.httpClient.request(url);
+    let $ = _cheerio.default.load(body);
 
-      let $ = _cheerio.default.load(body);
-
-      let name = ($('meta[property="og:title"]').attr('content') || '').trim();
-      let poster = $('meta[property="og:image"]').attr('content') || '';
-      let pageUrl = $('meta[property="og:url"]').attr('content') || url;
-      return {
-        id,
-        name,
-        poster,
-        url: pageUrl
-      };
-    })();
+    let name = ($('meta[property="og:title"]').attr('content') || '').trim();
+    let poster = $('meta[property="og:image"]').attr('content') || '';
+    let pageUrl = $('meta[property="og:url"]').attr('content') || url;
+    return {
+      id,
+      name,
+      poster,
+      url: pageUrl
+    };
   }
 
-  _getStreams(type, id) {
-    var _this3 = this;
+  async _getStreams(type, id) {
+    let url = `${BASE_URL}/${id}`;
+    let {
+      body
+    } = await this.httpClient.request(url);
 
-    return _asyncToGenerator(function* () {
-      let url = `${BASE_URL}/${id}`;
-      let {
-        body
-      } = yield _this3.httpClient.request(url);
+    let streams = this._extractStreamsFromPage(body);
 
-      let streams = _this3._extractStreamsFromPage(body);
-
-      return streams.map(stream => _objectSpread({}, stream, {
-        id
-      }));
-    })();
+    return streams.map(stream => _objectSpread({}, stream, {
+      id
+    }));
   }
 
 }

@@ -31,8 +31,6 @@ var _UsenetStreamer = _interopRequireDefault(require("./adapters/UsenetStreamer"
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } } function _next(value) { step("next", value); } function _throw(err) { step("throw", err); } _next(); }); }; }
-
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -284,88 +282,68 @@ class PornClient {
     return matchingAdapters.slice(0, MAX_ADAPTERS_PER_REQUEST);
   }
 
-  _invokeAdapterMethod(adapter, method, request, idProp) {
-    var _this = this;
+  async _invokeAdapterMethod(adapter, method, request, idProp) {
+    let results = await adapter[method](request);
 
-    return _asyncToGenerator(function* () {
-      let results = yield adapter[method](request);
+    if (method === 'getStreams') {
+      results = await this.debridClient.unrestrictStreams(results);
+    }
 
-      if (method === 'getStreams') {
-        results = yield _this.debridClient.unrestrictStreams(results);
-      }
-
-      return results.map(result => {
-        return normalizeResult(adapter, result, idProp);
-      });
-    })();
+    return results.map(result => {
+      return normalizeResult(adapter, result, idProp);
+    });
   } // Aggregate method that dispatches requests to matching adapters
 
 
-  _invokeMethod(adapterMethod, rawRequest, idProp) {
-    var _this2 = this;
+  async _invokeMethod(adapterMethod, rawRequest, idProp) {
+    let request = normalizeRequest(rawRequest);
 
-    return _asyncToGenerator(function* () {
-      let request = normalizeRequest(rawRequest);
+    let adapters = this._getAdaptersForRequest(request, adapterMethod);
 
-      let adapters = _this2._getAdaptersForRequest(request, adapterMethod);
+    if (!adapters.length) {
+      throw new Error('Couldn\'t find suitable adapters for a request');
+    }
 
-      if (!adapters.length) {
-        throw new Error('Couldn\'t find suitable adapters for a request');
-      }
+    let results = [];
 
-      let results = [];
+    for (let adapter of adapters) {
+      let adapterResults = await this._invokeAdapterMethod(adapter, adapterMethod, request, idProp);
+      results.push(adapterResults);
+    }
 
-      for (let adapter of adapters) {
-        let adapterResults = yield _this2._invokeAdapterMethod(adapter, adapterMethod, request, idProp);
-        results.push(adapterResults);
-      }
-
-      return mergeResults(results, request.limit);
-    })();
+    return mergeResults(results, request.limit);
   } // This is a public wrapper around the private method
   // that implements caching and result normalization
 
 
-  invokeMethod(methodName, rawRequest) {
-    var _this3 = this;
+  async invokeMethod(methodName, rawRequest) {
+    let {
+      adapterMethod,
+      cacheTtl,
+      idProp,
+      expectsArray
+    } = METHODS[methodName];
 
-    return _asyncToGenerator(function* () {
-      let {
-        adapterMethod,
-        cacheTtl,
-        idProp,
-        expectsArray
-      } = METHODS[methodName];
+    let invokeMethod = async () => {
+      let result = await this._invokeMethod(adapterMethod, rawRequest, idProp);
+      result = expectsArray ? result : result[0];
+      return result;
+    };
 
-      let invokeMethod =
-      /*#__PURE__*/
-      function () {
-        var _ref = _asyncToGenerator(function* () {
-          let result = yield _this3._invokeMethod(adapterMethod, rawRequest, idProp);
-          result = expectsArray ? result : result[0];
-          return result;
-        });
-
-        return function invokeMethod() {
-          return _ref.apply(this, arguments);
-        };
-      }();
-
-      if (_this3.cache) {
-        let cacheKey = CACHE_PREFIX + JSON.stringify(rawRequest);
-        let cacheOptions = {
-          ttl: cacheTtl
-        };
-        return _this3.cache.wrap(cacheKey, invokeMethod, cacheOptions);
-      } else {
-        return invokeMethod();
-      }
-    })();
+    if (this.cache) {
+      let cacheKey = CACHE_PREFIX + JSON.stringify(rawRequest);
+      let cacheOptions = {
+        ttl: cacheTtl
+      };
+      return this.cache.wrap(cacheKey, invokeMethod, cacheOptions);
+    } else {
+      return invokeMethod();
+    }
   }
 
 }
 
-_defineProperty(PornClient, "ID", ID);
+_defineProperty(_defineProperty(PornClient, "ID", ID), "SORT_PROP_PREFIX", SORT_PROP_PREFIX);
 
 var _default = PornClient;
 exports.default = _default;
