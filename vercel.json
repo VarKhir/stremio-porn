@@ -24,6 +24,10 @@
       "dest": "/static/screenshot_discover.jpg"
     },
     {
+      "src": "^/$",
+      "dest": "/static/index.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/dist/serverless.js"
     }

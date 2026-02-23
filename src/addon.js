@@ -4,7 +4,8 @@ import PornClient from './PornClient'
 
 
 const ID = process.env.GOONHUB_ID || 'org.goonhub'
-const ENDPOINT = process.env.GOONHUB_ENDPOINT || 'http://localhost'
+const ENDPOINT = process.env.GOONHUB_ENDPOINT ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost')
 const PROXY = process.env.GOONHUB_PROXY || process.env.HTTPS_PROXY
 const CACHE = process.env.GOONHUB_CACHE || '1'
 const EMAIL = process.env.GOONHUB_EMAIL || process.env.EMAIL
