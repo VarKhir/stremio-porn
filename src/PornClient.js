@@ -110,7 +110,7 @@ function normalizeRequest(request) {
       .map((p) => p.slice(SORT_PROP_PREFIX.length))
   }
 
-  // Support plain string queries as name-based search
+  // Support plain string queries by converting them to name-based search objects
   if (typeof query === 'string') {
     query = { search: query }
   } else if (query) {

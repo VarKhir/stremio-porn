@@ -141,7 +141,7 @@ function normalizeRequest(request) {
 
   if (sort) {
     adapters = Object.keys(sort).filter(p => p.startsWith(SORT_PROP_PREFIX)).map(p => p.slice(SORT_PROP_PREFIX.length));
-  } // Support plain string queries as name-based search
+  } // Support plain string queries by converting them to name-based search objects
 
 
   if (typeof query === 'string') {
