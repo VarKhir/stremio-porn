@@ -5,6 +5,11 @@
 <p align="center">
   <em>Time to unsheathe your sword!</em>
 </p>
+<p align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVarKhir%2Fgoonhub&env=GOONHUB_ID,GOONHUB_ENDPOINT&envDescription=GOONHUB_ID%3A%20Unique%20addon%20identifier.%20GOONHUB_ENDPOINT%3A%20Public%20URL%20of%20the%20deployment.&project-name=goonhub&repository-name=goonhub">
+    <img src="https://vercel.com/button" alt="Deploy with Vercel" />
+  </a>
+</p>
 
 This is a [Stremio](https://www.stremio.com/) addon that provides porn content from various websites:
 
@@ -15,8 +20,10 @@ This is a [Stremio](https://www.stremio.com/) addon that provides porn content f
 ## Features
 
 - Adds a dedicated tab in Discover for each website
-- Works in Stremio v4 and v3.6
+- Works in Stremio v5, v4 and v3.6
+- Uses the modern `stremio-addon-sdk` for full v5 compatibility
 - Provides Stremio catalogs for all supported porn sites
+- **Deployable on Vercel** — one-click deploy with the button above
 - **Web UI for configuring debrid services** (Real-Debrid, Torbox) — no environment variables needed for debrid tokens
 - Torbox cache availability is checked before unrestricting links for reliable results
 - Optional Usenet streaming passthrough for IMDb/TMDb/TVDB ids (e.g. [UsenetStreamer](https://github.com/Sanket9225/UsenetStreamer))
@@ -32,6 +39,8 @@ This is a [Stremio](https://www.stremio.com/) addon that provides porn content f
 ## Running
 
 The addon is a web server that fetches video streams from the porn sites in response to requests from Stremio clients. It uses environment variables for server configuration and includes a handful of npm scripts to run with or without Docker.
+
+### Quick Start (Local)
 
 To install and quickly start the addon, do:
 
@@ -50,6 +59,17 @@ In order for the addon to work publicly, the following environment variables mus
 - `GOONHUB_ID` to a non-default value
 
 Note: since this addon scrapes pages, it is recommended to run it behind a proxy.
+
+### Deploy to Vercel
+
+Click the **Deploy with Vercel** button at the top of this README, or deploy manually:
+
+1. Fork this repository
+2. Import the project in [Vercel](https://vercel.com/new)
+3. Set the required environment variables (`GOONHUB_ID`, `GOONHUB_ENDPOINT`)
+4. Deploy
+
+The addon exposes a serverless function at the root URL. Set `GOONHUB_ENDPOINT` to your Vercel deployment URL (e.g. `https://goonhub.vercel.app`).
 
 
 ## Debrid Services
@@ -76,6 +96,7 @@ Each of these scripts can be used with `yarn <script>` or `npm run <script>`:
 - `dev` sets `NODE_ENV` to `development` and launches the addon with node inspector activated
 - `test` to run tests with Jest
 - `build` builds the addon in the `dist` dir (add `-w` to watch)
+- `vercel-build` builds the addon for Vercel deployment
 
 * `docker-build` builds the Docker image
 * `docker-start` launches the addon in a `goonhub` Docker container

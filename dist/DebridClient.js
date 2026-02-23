@@ -9,8 +9,6 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } } function _next(value) { step("next", value); } function _throw(err) { step("throw", err); } _next(); }); }; }
-
 class DebridClient {
   constructor(httpClient, options = {}) {
     this.httpClient = httpClient;
@@ -52,150 +50,122 @@ class DebridClient {
     return null;
   }
 
-  _checkTorboxCache(url) {
-    var _this = this;
+  async _checkTorboxCache(url) {
+    if (!this.torboxToken || !url) {
+      return null;
+    }
 
-    return _asyncToGenerator(function* () {
-      if (!_this.torboxToken || !url) {
-        return null;
+    try {
+      let encoded = encodeURIComponent(url);
+      let checkUrl = `${this.torboxCacheEndpoint}?url=${encoded}`;
+      let {
+        body
+      } = await this.httpClient.request(checkUrl, {
+        headers: {
+          Authorization: `Bearer ${this.torboxToken}`
+        },
+        json: true
+      });
+
+      if (body && body.data && body.data.cached === true) {
+        return true;
       }
 
-      try {
-        let encoded = encodeURIComponent(url);
-        let checkUrl = `${_this.torboxCacheEndpoint}?url=${encoded}`;
-        let {
-          body
-        } = yield _this.httpClient.request(checkUrl, {
-          headers: {
-            Authorization: `Bearer ${_this.torboxToken}`
-          },
-          json: true
-        });
-
-        if (body && body.data && body.data.cached === true) {
-          return true;
-        }
-
-        return false;
-      } catch (err) {
-        return null;
-      }
-    })();
+      return false;
+    } catch (err) {
+      return null;
+    }
   }
 
-  _unrestrictWithRealDebrid(url) {
-    var _this2 = this;
+  async _unrestrictWithRealDebrid(url) {
+    if (!this.realDebridToken) {
+      return null;
+    }
 
-    return _asyncToGenerator(function* () {
-      if (!_this2.realDebridToken) {
-        return null;
-      }
-
-      try {
-        let {
-          body
-        } = yield _this2.httpClient.request('https://api.real-debrid.com/rest/1.0/unrestrict/link', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${_this2.realDebridToken}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: _this2._encodeForm({
-            link: url
-          }),
-          json: true
-        });
-        return _this2._pickUrl(body);
-      } catch (err) {
-        return null;
-      }
-    })();
+    try {
+      let {
+        body
+      } = await this.httpClient.request('https://api.real-debrid.com/rest/1.0/unrestrict/link', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.realDebridToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: this._encodeForm({
+          link: url
+        }),
+        json: true
+      });
+      return this._pickUrl(body);
+    } catch (err) {
+      return null;
+    }
   }
 
-  _unrestrictWithTorbox(url) {
-    var _this3 = this;
+  async _unrestrictWithTorbox(url) {
+    if (!this.torboxToken) {
+      return null;
+    }
 
-    return _asyncToGenerator(function* () {
-      if (!_this3.torboxToken) {
+    try {
+      let isCached = await this._checkTorboxCache(url);
+
+      if (isCached === false) {
         return null;
       }
 
-      try {
-        let isCached = yield _this3._checkTorboxCache(url);
-
-        if (isCached === false) {
-          return null;
-        }
-
-        let {
-          body
-        } = yield _this3.httpClient.request(_this3.torboxEndpoint, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${_this3.torboxToken}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body: _this3._encodeForm({
-            url
-          }),
-          json: true
-        });
-        return _this3._pickUrl(body);
-      } catch (err) {
-        return null;
-      }
-    })();
+      let {
+        body
+      } = await this.httpClient.request(this.torboxEndpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.torboxToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: this._encodeForm({
+          url
+        }),
+        json: true
+      });
+      return this._pickUrl(body);
+    } catch (err) {
+      return null;
+    }
   }
 
-  _unrestrict(url) {
-    var _this4 = this;
+  async _unrestrict(url) {
+    if (!url || !this.isEnabled) {
+      return null;
+    }
 
-    return _asyncToGenerator(function* () {
-      if (!url || !_this4.isEnabled) {
-        return null;
-      }
+    if (this.realDebridToken) {
+      return this._unrestrictWithRealDebrid(url);
+    }
 
-      if (_this4.realDebridToken) {
-        return _this4._unrestrictWithRealDebrid(url);
-      }
-
-      return _this4._unrestrictWithTorbox(url);
-    })();
+    return this._unrestrictWithTorbox(url);
   }
 
-  unrestrictStreams(streams) {
-    var _this5 = this;
+  async unrestrictStreams(streams) {
+    if (!Array.isArray(streams) || !this.isEnabled) {
+      return streams || [];
+    }
 
-    return _asyncToGenerator(function* () {
-      if (!Array.isArray(streams) || !_this5.isEnabled) {
-        return streams || [];
+    return Promise.all(streams.map(async stream => {
+      if (!stream || !stream.url) {
+        return stream;
       }
 
-      return Promise.all(streams.map(
-      /*#__PURE__*/
-      function () {
-        var _ref = _asyncToGenerator(function* (stream) {
-          if (!stream || !stream.url) {
-            return stream;
-          }
+      let unrestrictedUrl = await this._unrestrict(stream.url);
 
-          let unrestrictedUrl = yield _this5._unrestrict(stream.url);
-
-          if (unrestrictedUrl && unrestrictedUrl !== stream.url) {
-            return _objectSpread({}, stream, {
-              url: unrestrictedUrl,
-              name: stream.name || 'Debrid'
-            });
-          } else {
-            return stream;
-          }
+      if (unrestrictedUrl && unrestrictedUrl !== stream.url) {
+        return _objectSpread({}, stream, {
+          url: unrestrictedUrl,
+          name: stream.name || 'Debrid'
         });
-
-        return function (_x) {
-          return _ref.apply(this, arguments);
-        };
-      }()));
-    })();
+      } else {
+        return stream;
+      }
+    }));
   }
 
 }

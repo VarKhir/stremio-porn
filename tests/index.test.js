@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 
 import { get } from 'http'
-import { Client as AddonClient } from 'stremio-addons'
 
 
 jest.mock('../src/PornClient', () => {
@@ -9,11 +8,24 @@ jest.mock('../src/PornClient', () => {
     invokeMethod: jest.fn().mockResolvedValue([]),
   }))
   MockPornClient.ID = 'porn_id'
+  MockPornClient.SORT_PROP_PREFIX = 'popularities.porn.'
   MockPornClient.getAdapters = jest.fn().mockReturnValue([
-    { DISPLAY_NAME: 'TestSite', name: 'TestSite', SUPPORTED_TYPES: ['movie'] },
+    {
+      DISPLAY_NAME: 'TestSite',
+      name: 'TestSite',
+      SUPPORTED_TYPES: ['movie'],
+    },
   ])
   MockPornClient.getSorts = jest.fn().mockReturnValue([])
-  MockPornClient.getCatalogs = jest.fn().mockReturnValue([])
+  MockPornClient.getCatalogs = jest.fn().mockReturnValue([
+    {
+      type: 'movie',
+      id: 'testsite-movie',
+      name: 'TestSite',
+      extra: [{ name: 'search' }, { name: 'skip' }],
+      extraSupported: ['search', 'skip'],
+    },
+  ])
   MockPornClient.getIdPrefixes = jest.fn().mockReturnValue([])
   return { default: MockPornClient, __esModule: true }
 })
@@ -36,14 +48,25 @@ function reset() {
   delete process.env.NODE_ENV
 }
 
+function httpGet(url) {
+  return new Promise((resolve, reject) => {
+    get(url, (res) => {
+      let body = ''
+      res.on('data', (chunk) => { body += chunk })
+      res.on('end', () => {
+        res.body = body
+        resolve(res)
+      })
+    }).on('error', reject)
+  })
+}
+
 function initAddon() {
   return {
     start() {
       // eslint-disable-next-line global-require
       this.server = require('../src/index').default
 
-      // In case an error occurs before the server starts (e.g. port is in use),
-      // it silently fails and the tests stall
       return new Promise((resolve, reject) => {
         this.server.once('listening', () => resolve(this))
         this.server.once('error', (err) => {
@@ -68,13 +91,7 @@ function initAddon() {
 }
 
 describe('Addon @integration', () => {
-  let addonClient
   let addon
-
-  beforeAll(() => {
-    addonClient = new AddonClient()
-    addonClient.add('http://localhost')
-  })
 
   beforeEach(() => {
     reset()
@@ -85,58 +102,86 @@ describe('Addon @integration', () => {
     return addon.stop()
   })
 
-  test('When a port is not specified, starts a web server on port 80', async () => {
-    await addon.start()
-    expect(addon.server.address().port).toBe(80)
-  })
-
-  test('When a port is specified, starts a web server on it', async () => {
+  test('starts on the specified port', async () => {
     process.env.GOONHUB_PORT = '9028'
     await addon.start()
     expect(addon.server.address().port).toBe(9028)
   })
 
-  test('meta.get is implemented', async (done) => {
+  test('manifest.json returns a valid manifest', async () => {
+    process.env.GOONHUB_PORT = '9029'
     await addon.start()
 
-    addonClient.meta.get({}, (err) => {
-      err ? done.fail(err) : done()
-    })
-  })
-
-  test('meta.find is implemented', async (done) => {
-    await addon.start()
-
-    addonClient.meta.find({}, (err) => {
-      err ? done.fail(err) : done()
-    })
-  })
-
-  test('meta.search is implemented', async (done) => {
-    await addon.start()
-
-    addonClient.meta.search({}, (err) => {
-      err ? done.fail(err) : done()
-    })
-  })
-
-  test('stream.find is implemented', async (done) => {
-    await addon.start()
-
-    addonClient.stream.find({}, (err) => {
-      err ? done.fail(err) : done()
-    })
-  })
-
-  test('The main page is accessible', async () => {
-    await addon.start()
-    let res = await new Promise((resolve) => {
-      get('http://localhost', resolve)
-    })
+    let res = await httpGet('http://localhost:9029/manifest.json')
     expect(res.statusCode).toBe(200)
+
+    let manifest = JSON.parse(res.body)
+    expect(manifest.id).toBeTruthy()
+    expect(manifest.name).toBe('GoonHub')
+    expect(manifest.version).toBeTruthy()
+    expect(manifest.resources).toEqual(
+      expect.arrayContaining(['catalog', 'meta', 'stream'])
+    )
+    expect(manifest.types).toEqual(
+      expect.arrayContaining(['movie', 'tv'])
+    )
+    expect(manifest.catalogs.length).toBeGreaterThan(0)
   })
 
-  test('The static files are accessible', async () => {
+  test('catalog endpoint returns metas', async () => {
+    process.env.GOONHUB_PORT = '9030'
+    await addon.start()
+
+    let url =
+      'http://localhost:9030/catalog/movie/testsite-movie.json'
+    let res = await httpGet(url)
+    expect(res.statusCode).toBe(200)
+
+    let data = JSON.parse(res.body)
+    expect(data).toHaveProperty('metas')
+    expect(Array.isArray(data.metas)).toBe(true)
+  })
+
+  test('meta endpoint returns meta', async () => {
+    process.env.GOONHUB_PORT = '9031'
+    await addon.start()
+
+    let url =
+      'http://localhost:9031/meta/movie/porn_id:TestSite-movie-1.json'
+    let res = await httpGet(url)
+    expect(res.statusCode).toBe(200)
+
+    let data = JSON.parse(res.body)
+    expect(data).toHaveProperty('meta')
+  })
+
+  test('stream endpoint returns streams', async () => {
+    process.env.GOONHUB_PORT = '9032'
+    await addon.start()
+
+    let url =
+      'http://localhost:9032/stream/movie/porn_id:TestSite-movie-1.json'
+    let res = await httpGet(url)
+    expect(res.statusCode).toBe(200)
+
+    let data = JSON.parse(res.body)
+    expect(data).toHaveProperty('streams')
+    expect(Array.isArray(data.streams)).toBe(true)
+  })
+
+  test('/api/status returns status info', async () => {
+    process.env.GOONHUB_PORT = '9033'
+    await addon.start()
+
+    let res = await httpGet('http://localhost:9033/api/status')
+    expect(res.statusCode).toBe(200)
+
+    let status = JSON.parse(res.body)
+    expect(status.manifest.name).toBe('GoonHub')
+  })
+
+  test('static files are accessible', async () => {
+    process.env.GOONHUB_PORT = '9034'
     await addon.start()
     let staticFiles = [
       'logo.png',
@@ -145,14 +190,12 @@ describe('Addon @integration', () => {
     ]
     let promises = staticFiles.map((file) => {
       return new Promise((resolve) => {
-        get(`http://localhost/${file}`, resolve)
+        get(`http://localhost:9034/${file}`, resolve)
       })
     })
     let responses = await Promise.all(promises)
 
     responses.forEach((res) => {
-      // Requests to non-existent files return the landing page,
-      // so we check that the response is not HTML
       let contentType = res.headers['content-type'].split(';')[0]
       expect(contentType).not.toBe('text/html')
       expect(res.statusCode).toBe(200)

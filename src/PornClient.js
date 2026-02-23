@@ -153,6 +153,7 @@ function mergeResults(results) {
 
 class PornClient {
   static ID = ID
+  static SORT_PROP_PREFIX = SORT_PROP_PREFIX
   static getAdapters(options = {}) {
     let adapters = [...BASE_ADAPTERS]
 
