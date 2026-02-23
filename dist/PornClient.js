@@ -21,6 +21,10 @@ var _SpankWire = _interopRequireDefault(require("./adapters/SpankWire"));
 
 var _PornCom = _interopRequireDefault(require("./adapters/PornCom"));
 
+var _XVideos = _interopRequireDefault(require("./adapters/XVideos"));
+
+var _XHamster = _interopRequireDefault(require("./adapters/XHamster"));
+
 var _Chaturbate = _interopRequireDefault(require("./adapters/Chaturbate"));
 
 var _UsenetStreamer = _interopRequireDefault(require("./adapters/UsenetStreamer"));
@@ -42,7 +46,7 @@ const CACHE_PREFIX = 'goonhub|'; // Making multiple requests to multiple adapter
 // so we only support 1 adapter per request for now.
 
 const MAX_ADAPTERS_PER_REQUEST = 1;
-const BASE_ADAPTERS = [_PornHub.default, _RedTube.default, _YouPorn.default, _SpankWire.default, _PornCom.default, _Chaturbate.default];
+const BASE_ADAPTERS = [_PornHub.default, _RedTube.default, _YouPorn.default, _SpankWire.default, _PornCom.default, _XVideos.default, _XHamster.default, _Chaturbate.default];
 
 const isUsenetAdapter = (adapter, includeClass = false) => {
   return adapter instanceof _UsenetStreamer.default || includeClass && adapter === _UsenetStreamer.default;
@@ -78,11 +82,8 @@ function buildCatalogs(adapters) {
         }, {
           name: 'genre',
           isRequired: false
-        }, {
-          name: 'sort',
-          options: [`${SORT_PROP_PREFIX}${Adapter.name}`]
         }],
-        extraSupported: ['search', 'skip', 'genre', 'sort']
+        extraSupported: ['search', 'skip', 'genre']
       });
     });
     return catalogs;
@@ -140,7 +141,8 @@ function normalizeRequest(request) {
 
   if (sort) {
     adapters = Object.keys(sort).filter(p => p.startsWith(SORT_PROP_PREFIX)).map(p => p.slice(SORT_PROP_PREFIX.length));
-  }
+  } // Support plain string queries as name-based search
+
 
   if (typeof query === 'string') {
     query = {
@@ -161,10 +163,6 @@ function normalizeRequest(request) {
 
     if (type && query.type && type !== query.type) {
       throw new Error(`Request query and porn_id types do not match (${type}, ${query.type})`);
-    }
-
-    if (adapters.length && !adapters.includes(adapter)) {
-      throw new Error(`Request sort and porn_id adapters do not match (${adapter})`);
     }
 
     adapters = [adapter];

@@ -155,10 +155,8 @@ class DebridClient {
         return null;
       }
 
-      let directUrl = yield _this4._unrestrictWithRealDebrid(url);
-
-      if (directUrl) {
-        return directUrl;
+      if (_this4.realDebridToken) {
+        return _this4._unrestrictWithRealDebrid(url);
       }
 
       return _this4._unrestrictWithTorbox(url);
