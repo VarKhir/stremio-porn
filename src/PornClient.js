@@ -6,6 +6,8 @@ import RedTube from './adapters/RedTube'
 import YouPorn from './adapters/YouPorn'
 import SpankWire from './adapters/SpankWire'
 import PornCom from './adapters/PornCom'
+import XVideos from './adapters/XVideos'
+import XHamster from './adapters/XHamster'
 import Chaturbate from './adapters/Chaturbate'
 import UsenetStreamer from './adapters/UsenetStreamer'
 
@@ -20,7 +22,9 @@ const CACHE_PREFIX = 'goonhub|'
 // and then aggregating them is a lot of work,
 // so we only support 1 adapter per request for now.
 const MAX_ADAPTERS_PER_REQUEST = 1
-const BASE_ADAPTERS = [PornHub, RedTube, YouPorn, SpankWire, PornCom, Chaturbate]
+const BASE_ADAPTERS = [
+  PornHub, RedTube, YouPorn, SpankWire, PornCom, XVideos, XHamster, Chaturbate,
+]
 const isUsenetAdapter = (adapter, includeClass = false) => {
   return adapter instanceof UsenetStreamer ||
     (includeClass && adapter === UsenetStreamer)
@@ -51,11 +55,8 @@ function buildCatalogs(adapters) {
         }, {
           name: 'genre',
           isRequired: false,
-        }, {
-          name: 'sort',
-          options: [`${SORT_PROP_PREFIX}${Adapter.name}`],
         }],
-        extraSupported: ['search', 'skip', 'genre', 'sort'],
+        extraSupported: ['search', 'skip', 'genre'],
       })
     })
 
@@ -109,6 +110,7 @@ function normalizeRequest(request) {
       .map((p) => p.slice(SORT_PROP_PREFIX.length))
   }
 
+  // Support plain string queries by converting them to name-based search objects
   if (typeof query === 'string') {
     query = { search: query }
   } else if (query) {
@@ -123,12 +125,6 @@ function normalizeRequest(request) {
     if (type && query.type && type !== query.type) {
       throw new Error(
         `Request query and porn_id types do not match (${type}, ${query.type})`
-      )
-    }
-
-    if (adapters.length && !adapters.includes(adapter)) {
-      throw new Error(
-        `Request sort and porn_id adapters do not match (${adapter})`
       )
     }
 

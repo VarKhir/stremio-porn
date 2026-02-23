@@ -123,10 +123,8 @@ class DebridClient {
       return null
     }
 
-    let directUrl = await this._unrestrictWithRealDebrid(url)
-
-    if (directUrl) {
-      return directUrl
+    if (this.realDebridToken) {
+      return this._unrestrictWithRealDebrid(url)
     }
 
     return this._unrestrictWithTorbox(url)

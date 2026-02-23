@@ -4,7 +4,19 @@ import { get } from 'http'
 import { Client as AddonClient } from 'stremio-addons'
 
 
-jest.mock('../src/PornClient')
+jest.mock('../src/PornClient', () => {
+  let MockPornClient = jest.fn().mockImplementation(() => ({
+    invokeMethod: jest.fn().mockResolvedValue([]),
+  }))
+  MockPornClient.ID = 'porn_id'
+  MockPornClient.getAdapters = jest.fn().mockReturnValue([
+    { DISPLAY_NAME: 'TestSite', name: 'TestSite', SUPPORTED_TYPES: ['movie'] },
+  ])
+  MockPornClient.getSorts = jest.fn().mockReturnValue([])
+  MockPornClient.getCatalogs = jest.fn().mockReturnValue([])
+  MockPornClient.getIdPrefixes = jest.fn().mockReturnValue([])
+  return { default: MockPornClient, __esModule: true }
+})
 
 // Prevent the addon from printing
 // eslint-disable-next-line no-unused-vars
