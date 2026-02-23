@@ -45,6 +45,7 @@ function reset() {
   delete process.env.GOONHUB_PROXY
   delete process.env.GOONHUB_CACHE
   delete process.env.GOONHUB_EMAIL
+  delete process.env.VERCEL_URL
   delete process.env.NODE_ENV
 }
 

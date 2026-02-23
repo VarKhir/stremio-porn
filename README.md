@@ -6,7 +6,7 @@
   <em>Time to unsheathe your sword!</em>
 </p>
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVarKhir%2Fgoonhub&env=GOONHUB_ID,GOONHUB_ENDPOINT&envDescription=GOONHUB_ID%3A%20Unique%20addon%20identifier.%20GOONHUB_ENDPOINT%3A%20Public%20URL%20of%20the%20deployment.&project-name=goonhub&repository-name=goonhub">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVarKhir%2Fgoonhub&env=GOONHUB_ID&envDescription=GOONHUB_ID%3A%20Unique%20addon%20identifier.&project-name=goonhub&repository-name=goonhub">
     <img src="https://vercel.com/button" alt="Deploy with Vercel" />
   </a>
 </p>
@@ -66,10 +66,10 @@ Click the **Deploy with Vercel** button at the top of this README, or deploy man
 
 1. Fork this repository
 2. Import the project in [Vercel](https://vercel.com/new)
-3. Set the required environment variables (`GOONHUB_ID`, `GOONHUB_ENDPOINT`)
+3. Set the required environment variable (`GOONHUB_ID`)
 4. Deploy
 
-The addon exposes a serverless function at the root URL. Set `GOONHUB_ENDPOINT` to your Vercel deployment URL (e.g. `https://goonhub.vercel.app`).
+The addon exposes a serverless function at the root URL. The endpoint URL is automatically detected from Vercel's `VERCEL_URL` environment variable — no need to set `GOONHUB_ENDPOINT` manually.
 
 
 ## Debrid Services
@@ -117,7 +117,7 @@ The addon uses environment variables for **server-level** settings. Debrid servi
 |----------|---------|-------------|
 | `NODE_ENV` | — | Set to `production` to announce the addon to the Stremio tracker |
 | `GOONHUB_ID` | `goonhub` | Addon identifier. Must be changed from the default in production mode |
-| `GOONHUB_ENDPOINT` | `http://localhost` | Public base URL of the server. Must be publicly accessible in production |
+| `GOONHUB_ENDPOINT` | `http://localhost` | Public base URL of the server. Auto-detected on Vercel via `VERCEL_URL` |
 | `GOONHUB_PORT` | `80` | Port the server listens on |
 | `GOONHUB_EMAIL` | — | Contact email address shown in the addon manifest |
 | `GOONHUB_PROXY` | — | HTTPS proxy address to route all outbound requests through |
