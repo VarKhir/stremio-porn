@@ -165,7 +165,7 @@ builder.defineCatalogHandler(async ({
             sort: {
               [sortProp]: -1
             },
-            skip: 0,
+            skip: parseInt(extra.skip, 10) || 0,
             limit: 10
           };
           return await client.invokeMethod('meta.search', request);
