@@ -40,4 +40,30 @@ describe('XVideos', () => {
       expect(streams[2].url).toContain('test_low.mp4')
     })
   })
+
+  describe('#_extractMetadataFromPage()', () => {
+    test('extracts metadata from a sample video page', () => {
+      let adapter = new XVideos()
+      let meta = adapter._extractMetadataFromPage(SAMPLE_PAGE)
+
+      expect(meta.name).toBe('Test Video')
+      expect(meta.poster).toContain('thumbs169poster/test.jpg')
+      expect(meta.pageUrl).toBe('https://www.xvideos.com/video12345/test_video')
+      expect(meta.description).toBe('Watch Test Video on XVIDEOS for free')
+      expect(meta.tags).toEqual(['amateur', 'blonde', 'pov'])
+      expect(meta.duration).toBe('630')
+      expect(meta.year).toBe(2023)
+    })
+
+    test('returns empty arrays and strings for missing metadata', () => {
+      let adapter = new XVideos()
+      let meta = adapter._extractMetadataFromPage('<html><head></head><body></body></html>')
+
+      expect(meta.name).toBe('')
+      expect(meta.poster).toBe('')
+      expect(meta.tags).toEqual([])
+      expect(meta.duration).toBe('')
+      expect(meta.year).toBe('')
+    })
+  })
 })

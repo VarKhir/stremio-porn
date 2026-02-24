@@ -21,8 +21,9 @@ class XVideos extends BaseAdapter {
       poster: item.poster,
       posterShape: 'landscape',
       website: item.url,
-      description: item.url,
+      description: item.description || item.url,
       runtime: item.duration,
+      year: item.year,
       isFree: 1,
     })
   }
@@ -107,16 +108,71 @@ class XVideos extends BaseAdapter {
     return this._parseSearchResults(body)
   }
 
-  async _getItem(type, id) {
-    let url = `${BASE_URL}/${id}`
-    let { body } = await this.httpClient.request(url)
+  _extractMetadataFromPage(body) {
     let $ = cheerio.load(body)
 
     let name = ($('meta[property="og:title"]').attr('content') || '').trim()
     let poster = $('meta[property="og:image"]').attr('content') || ''
-    let pageUrl = $('meta[property="og:url"]').attr('content') || url
+    let pageUrl = $('meta[property="og:url"]').attr('content') || ''
+    let description = ($('meta[property="og:description"]').attr('content') ||
+      $('meta[name="description"]').attr('content') || '').trim()
 
-    return { id, name, poster, url: pageUrl }
+    let tags = []
+    let keywords = ($('meta[name="keywords"]').attr('content') || '').trim()
+    if (keywords) {
+      tags = keywords.split(',').map((t) => t.trim()).filter(Boolean)
+    }
+    if (!tags.length) {
+      $('.video-tags-list a, .is-keyword a').each((i, el) => {
+        let tag = $(el).text().trim()
+        if (tag && tag !== '+') tags.push(tag)
+      })
+    }
+
+    let duration = ''
+    let durationMatch = body.match(
+      /html5player\.setVideoTitle[^;]*;[\s\S]*?var\s+video_duration\s*=\s*['"]?(\d+)/
+    )
+    if (!durationMatch) {
+      durationMatch = body.match(/"duration"\s*:\s*"?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?"?/)
+    }
+    if (durationMatch) {
+      if (durationMatch[2] !== undefined || durationMatch[3] !== undefined) {
+        let h = parseInt(durationMatch[1], 10) || 0
+        let m = parseInt(durationMatch[2], 10) || 0
+        let s = parseInt(durationMatch[3], 10) || 0
+        duration = String(h * 3600 + m * 60 + s)
+      } else {
+        duration = durationMatch[1]
+      }
+    }
+
+    let year = ''
+    let dateMatch = body.match(
+      /"uploadDate"\s*:\s*"(\d{4})-/
+    )
+    if (dateMatch) {
+      year = parseInt(dateMatch[1], 10)
+    }
+
+    return { name, poster, pageUrl, description, tags, duration, year }
+  }
+
+  async _getItem(type, id) {
+    let url = `${BASE_URL}/${id}`
+    let { body } = await this.httpClient.request(url)
+    let meta = this._extractMetadataFromPage(body)
+
+    return {
+      id,
+      name: meta.name,
+      poster: meta.poster,
+      url: meta.pageUrl || url,
+      tags: meta.tags,
+      duration: meta.duration,
+      description: meta.description || meta.pageUrl || url,
+      year: meta.year,
+    }
   }
 
   async _getStreams(type, id) {

@@ -40,4 +40,30 @@ describe('XHamster', () => {
       expect(stream480.url).toContain('480p.mp4')
     })
   })
+
+  describe('#_extractMetadataFromPage()', () => {
+    test('extracts metadata from a sample video page', () => {
+      let adapter = new XHamster()
+      let meta = adapter._extractMetadataFromPage(SAMPLE_PAGE)
+
+      expect(meta.name).toBe('Test xHamster Video')
+      expect(meta.poster).toContain('poster.jpg')
+      expect(meta.pageUrl).toBe('https://xhamster.com/videos/test-video-12345')
+      expect(meta.description).toBe('Watch Test xHamster Video on xHamster')
+      expect(meta.tags).toEqual(['milf', 'brunette', 'hardcore'])
+      expect(meta.duration).toBe('630')
+      expect(meta.year).toBe(2023)
+    })
+
+    test('returns empty arrays and strings for missing metadata', () => {
+      let adapter = new XHamster()
+      let meta = adapter._extractMetadataFromPage('<html><head></head><body></body></html>')
+
+      expect(meta.name).toBe('')
+      expect(meta.poster).toBe('')
+      expect(meta.tags).toEqual([])
+      expect(meta.duration).toBe('')
+      expect(meta.year).toBe('')
+    })
+  })
 })
