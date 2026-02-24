@@ -157,6 +157,8 @@ builder.defineCatalogHandler(async ({ type, id, extra, config }) => {
       })),
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`Catalog error (${id}):`, err.message)
     return { metas: [] }
   }
 })
@@ -196,6 +198,8 @@ builder.defineMetaHandler(async ({ type, id, config }) => {
       },
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`Meta error (${id}):`, err.message)
     return { meta: null }
   }
 })
@@ -225,6 +229,8 @@ builder.defineStreamHandler(async ({ type, id, config }) => {
       })),
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`Stream error (${id}):`, err.message)
     return { streams: [] }
   }
 })

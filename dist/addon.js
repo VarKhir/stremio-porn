@@ -160,6 +160,8 @@ builder.defineCatalogHandler(async ({
       }))
     };
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`Catalog error (${id}):`, err.message);
     return {
       metas: []
     };
@@ -203,6 +205,8 @@ builder.defineMetaHandler(async ({
       }
     };
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`Meta error (${id}):`, err.message);
     return {
       meta: null
     };
@@ -233,6 +237,8 @@ builder.defineStreamHandler(async ({
       }))
     };
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error(`Stream error (${id}):`, err.message);
     return {
       streams: []
     };

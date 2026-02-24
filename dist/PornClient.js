@@ -294,6 +294,8 @@ class PornClient {
         return normalizeResult(adapter, result, idProp);
       });
     } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`Adapter ${adapter.constructor.name}` + `.${method} error:`, err.message);
       return [];
     }
   } // Aggregate method that dispatches to matching adapters
