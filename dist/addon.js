@@ -125,100 +125,118 @@ builder.defineCatalogHandler(async ({
   extra,
   config
 }) => {
-  let client = getClient(config);
-  let adapterName = parseAdapterFromCatalogId(id);
-  let sortProp = `${_PornClient.default.SORT_PROP_PREFIX}${adapterName}`;
-  let request = {
-    query: {
-      type,
-      search: extra.search || undefined,
-      genre: extra.genre || undefined
-    },
-    sort: {
-      [sortProp]: -1
-    },
-    skip: parseInt(extra.skip, 10) || 0,
-    limit: parseInt(extra.limit, 10) || undefined
-  };
-  let methodName = extra.search ? 'meta.search' : 'meta.find';
-  let results = await client.invokeMethod(methodName, request);
-  return {
-    metas: (results || []).map(item => ({
-      id: item.id,
-      type: item.type,
-      name: item.name,
-      poster: item.poster,
-      posterShape: item.posterShape,
-      banner: item.banner,
-      genre: item.genre,
-      year: item.year,
-      description: item.description,
-      runtime: item.runtime,
-      website: item.website,
-      popularity: item.popularity
-    }))
-  };
+  try {
+    let client = getClient(config);
+    let adapterName = parseAdapterFromCatalogId(id);
+    let sortProp = `${_PornClient.default.SORT_PROP_PREFIX}${adapterName}`;
+    let request = {
+      query: {
+        type,
+        search: extra.search || undefined,
+        genre: extra.genre || undefined
+      },
+      sort: {
+        [sortProp]: -1
+      },
+      skip: parseInt(extra.skip, 10) || 0,
+      limit: parseInt(extra.limit, 10) || undefined
+    };
+    let methodName = extra.search ? 'meta.search' : 'meta.find';
+    let results = await client.invokeMethod(methodName, request);
+    return {
+      metas: (results || []).map(item => ({
+        id: item.id,
+        type: item.type,
+        name: item.name,
+        poster: item.poster,
+        posterShape: item.posterShape,
+        banner: item.banner,
+        genre: item.genre,
+        year: item.year,
+        description: item.description,
+        runtime: item.runtime,
+        website: item.website,
+        popularity: item.popularity
+      }))
+    };
+  } catch (err) {
+    return {
+      metas: []
+    };
+  }
 });
 builder.defineMetaHandler(async ({
   type,
   id,
   config
 }) => {
-  let client = getClient(config);
-  let request = {
-    query: {
-      type,
-      [_PornClient.default.ID]: id
-    }
-  };
-  let result = await client.invokeMethod('meta.get', request);
+  try {
+    let client = getClient(config);
+    let request = {
+      query: {
+        type,
+        [_PornClient.default.ID]: id
+      }
+    };
+    let result = await client.invokeMethod('meta.get', request);
 
-  if (!result) {
+    if (!result) {
+      return {
+        meta: null
+      };
+    }
+
+    return {
+      meta: {
+        id: result.id,
+        type: result.type,
+        name: result.name,
+        poster: result.poster,
+        posterShape: result.posterShape,
+        banner: result.banner,
+        genre: result.genre,
+        year: result.year,
+        description: result.description,
+        runtime: result.runtime,
+        website: result.website,
+        popularity: result.popularity
+      }
+    };
+  } catch (err) {
     return {
       meta: null
     };
   }
-
-  return {
-    meta: {
-      id: result.id,
-      type: result.type,
-      name: result.name,
-      poster: result.poster,
-      posterShape: result.posterShape,
-      banner: result.banner,
-      genre: result.genre,
-      year: result.year,
-      description: result.description,
-      runtime: result.runtime,
-      website: result.website,
-      popularity: result.popularity
-    }
-  };
 });
 builder.defineStreamHandler(async ({
   type,
   id,
   config
 }) => {
-  let client = getClient(config);
-  let request = {
-    query: {
-      type,
-      [_PornClient.default.ID]: id
-    }
-  };
-  let results = await client.invokeMethod('stream.find', request);
-  return {
-    streams: (results || []).map(stream => ({
-      url: stream.url,
-      title: stream.title,
-      name: stream.name,
-      availability: stream.availability,
-      live: stream.live,
-      isFree: stream.isFree
-    }))
-  };
+  try {
+    let client = getClient(config);
+    let request = {
+      query: {
+        type,
+        [_PornClient.default.ID]: id
+      }
+    };
+    let results = await client.invokeMethod('stream.find', request);
+    return {
+      streams: (results || []).map(stream => ({
+        url: stream.url,
+        title: stream.title,
+        name: stream.name,
+        availability: stream.availability,
+        live: stream.live,
+        isFree: stream.isFree
+      }))
+    };
+  } catch (err) {
+    return {
+      streams: []
+    };
+  }
 });
 let addonInterface = builder.getInterface();
 var _default = addonInterface;
