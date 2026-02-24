@@ -21,8 +21,9 @@ class XHamster extends BaseAdapter {
       poster: item.poster,
       posterShape: 'landscape',
       website: item.url,
-      description: item.url,
+      description: item.description || item.url,
       runtime: item.duration,
+      year: item.year,
       isFree: 1,
     })
   }
@@ -108,16 +109,67 @@ class XHamster extends BaseAdapter {
     return this._parseSearchResults(body)
   }
 
-  async _getItem(type, id) {
-    let url = `${BASE_URL}/videos/${id}`
-    let { body } = await this.httpClient.request(url)
+  _extractMetadataFromPage(body) {
     let $ = cheerio.load(body)
 
     let name = ($('meta[property="og:title"]').attr('content') || '').trim()
     let poster = $('meta[property="og:image"]').attr('content') || ''
-    let pageUrl = $('meta[property="og:url"]').attr('content') || url
+    let pageUrl = $('meta[property="og:url"]').attr('content') || ''
+    let description = ($('meta[property="og:description"]').attr('content') ||
+      $('meta[name="description"]').attr('content') || '').trim()
 
-    return { id, name, poster, url: pageUrl }
+    let tags = []
+    let keywords = ($('meta[name="keywords"]').attr('content') || '').trim()
+    if (keywords) {
+      tags = keywords.split(',').map((t) => t.trim()).filter(Boolean)
+    }
+
+    let duration = ''
+    let year = ''
+
+    let initialsMatch = body.match(
+      /window\.initials\s*=\s*(\{[\s\S]*?\});/
+    )
+    if (initialsMatch && initialsMatch[1]) {
+      try {
+        let initials = JSON.parse(initialsMatch[1])
+        let video = initials.videoModel
+        if (video) {
+          if (video.duration) {
+            duration = String(video.duration)
+          }
+          if (video.created) {
+            let dateStr = video.created
+            let yearMatch = dateStr.match(/(\d{4})/)
+            if (yearMatch) year = parseInt(yearMatch[1], 10)
+          }
+          if (video.categories && !tags.length) {
+            tags = video.categories.map((c) => c.name || c).filter(Boolean)
+          }
+        }
+      } catch (err) {
+        // Ignore JSON parse errors
+      }
+    }
+
+    return { name, poster, pageUrl, description, tags, duration, year }
+  }
+
+  async _getItem(type, id) {
+    let url = `${BASE_URL}/videos/${id}`
+    let { body } = await this.httpClient.request(url)
+    let meta = this._extractMetadataFromPage(body)
+
+    return {
+      id,
+      name: meta.name,
+      poster: meta.poster,
+      url: meta.pageUrl || url,
+      tags: meta.tags,
+      duration: meta.duration,
+      description: meta.description || meta.pageUrl || url,
+      year: meta.year,
+    }
   }
 
   async _getStreams(type, id) {
