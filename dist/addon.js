@@ -40,9 +40,7 @@ let adapterNameMap = {};
 adapterClasses.forEach(A => {
   adapterNameMap[A.name.toLowerCase()] = A.name;
 });
-
-let catalogs = _PornClient.default.getCatalogs(baseClientOptions, adapterClasses);
-
+let catalogs = [..._PornClient.default.getCatalogs(baseClientOptions, adapterClasses), ..._PornClient.default.getSearchCatalogs(baseClientOptions, adapterClasses)];
 let idPrefixes = [`${_PornClient.default.ID}:`, ..._PornClient.default.getIdPrefixes(baseClientOptions, adapterClasses)];
 const MANIFEST = {
   id: ID,
@@ -119,6 +117,23 @@ function parseAdapterFromCatalogId(catalogId) {
   return adapterNameMap[adapterKey] || adapterKey;
 }
 
+function mapMeta(item) {
+  return {
+    id: item.id,
+    type: item.type,
+    name: item.name,
+    poster: item.poster,
+    posterShape: item.posterShape,
+    banner: item.banner,
+    genre: item.genre,
+    year: item.year,
+    description: item.description,
+    runtime: item.runtime,
+    website: item.website,
+    popularity: item.popularity
+  };
+}
+
 builder.defineCatalogHandler(async ({
   type,
   id,
@@ -126,7 +141,50 @@ builder.defineCatalogHandler(async ({
   config
 }) => {
   try {
-    let client = getClient(config);
+    let client = getClient(config); // Unified search catalog: search across all adapters for this type
+
+    if (id.startsWith(_PornClient.default.SEARCH_CATALOG_PREFIX)) {
+      if (!extra.search) {
+        return {
+          metas: []
+        };
+      }
+
+      let allMetas = [];
+      let searchAdapters = adapterClasses.filter(A => {
+        return A.SUPPORTED_TYPES.includes(type);
+      });
+      let promises = searchAdapters.map(async A => {
+        try {
+          let sortProp = `${_PornClient.default.SORT_PROP_PREFIX}${A.name}`;
+          let request = {
+            query: {
+              type,
+              search: extra.search
+            },
+            sort: {
+              [sortProp]: -1
+            },
+            skip: parseInt(extra.skip, 10) || 0,
+            limit: 10
+          };
+          return await client.invokeMethod('meta.search', request);
+        } catch (err) {
+          return [];
+        }
+      });
+      let results = await Promise.all(promises);
+      results.forEach(adapterResults => {
+        if (adapterResults && adapterResults.length) {
+          allMetas.push(...adapterResults);
+        }
+      });
+      return {
+        metas: allMetas.map(mapMeta)
+      };
+    } // Per-adapter catalog
+
+
     let adapterName = parseAdapterFromCatalogId(id);
     let sortProp = `${_PornClient.default.SORT_PROP_PREFIX}${adapterName}`;
     let request = {
@@ -144,20 +202,7 @@ builder.defineCatalogHandler(async ({
     let methodName = extra.search ? 'meta.search' : 'meta.find';
     let results = await client.invokeMethod(methodName, request);
     return {
-      metas: (results || []).map(item => ({
-        id: item.id,
-        type: item.type,
-        name: item.name,
-        poster: item.poster,
-        posterShape: item.posterShape,
-        banner: item.banner,
-        genre: item.genre,
-        year: item.year,
-        description: item.description,
-        runtime: item.runtime,
-        website: item.website,
-        popularity: item.popularity
-      }))
+      metas: (results || []).map(mapMeta)
     };
   } catch (err) {
     return {

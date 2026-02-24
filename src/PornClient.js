@@ -63,6 +63,31 @@ function buildCatalogs(adapters) {
     return catalogs
   }, [])
 }
+
+const SEARCH_CATALOG_PREFIX = 'goonhub-search-'
+
+function buildSearchCatalogs(adapters) {
+  let types = new Set()
+  adapters.forEach((Adapter) => {
+    if (!isUsenetAdapter(Adapter, true)) {
+      Adapter.SUPPORTED_TYPES.forEach((type) => types.add(type))
+    }
+  })
+
+  return Array.from(types).map((type) => ({
+    type,
+    id: `${SEARCH_CATALOG_PREFIX}${type}`,
+    name: 'GoonHub Search',
+    extra: [{
+      name: 'search',
+      isRequired: true,
+    }, {
+      name: 'skip',
+    }],
+    extraSupported: ['search', 'skip'],
+  }))
+}
+
 const METHODS = {
   'stream.find': {
     adapterMethod: 'getStreams',
@@ -171,6 +196,12 @@ class PornClient {
   static getCatalogs(options = {}, adapters = this.getAdapters(options)) {
     return buildCatalogs(adapters)
   }
+
+  static getSearchCatalogs(options = {}, adapters = this.getAdapters(options)) {
+    return buildSearchCatalogs(adapters)
+  }
+
+  static SEARCH_CATALOG_PREFIX = SEARCH_CATALOG_PREFIX
 
   static getIdPrefixes(options = {}, adapters = this.getAdapters(options)) {
     let prefixes = []

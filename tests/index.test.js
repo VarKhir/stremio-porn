@@ -27,6 +27,16 @@ jest.mock('../src/PornClient', () => {
     },
   ])
   MockPornClient.getIdPrefixes = jest.fn().mockReturnValue([])
+  MockPornClient.getSearchCatalogs = jest.fn().mockReturnValue([
+    {
+      type: 'movie',
+      id: 'goonhub-search-movie',
+      name: 'GoonHub Search',
+      extra: [{ name: 'search', isRequired: true }, { name: 'skip' }],
+      extraSupported: ['search', 'skip'],
+    },
+  ])
+  MockPornClient.SEARCH_CATALOG_PREFIX = 'goonhub-search-'
   return { default: MockPornClient, __esModule: true }
 })
 
@@ -141,6 +151,38 @@ describe('Addon @integration', () => {
     let data = JSON.parse(res.body)
     expect(data).toHaveProperty('metas')
     expect(Array.isArray(data.metas)).toBe(true)
+  })
+
+  test('search catalog endpoint returns metas', async () => {
+    process.env.GOONHUB_PORT = '9035'
+    await addon.start()
+
+    let url =
+      'http://localhost:9035/catalog/movie/goonhub-search-movie/search=test.json'
+    let res = await httpGet(url)
+    expect(res.statusCode).toBe(200)
+
+    let data = JSON.parse(res.body)
+    expect(data).toHaveProperty('metas')
+    expect(Array.isArray(data.metas)).toBe(true)
+  })
+
+  test('manifest includes search catalogs', async () => {
+    process.env.GOONHUB_PORT = '9036'
+    await addon.start()
+
+    let res = await httpGet('http://localhost:9036/manifest.json')
+    let manifest = JSON.parse(res.body)
+    let searchCatalogs = manifest.catalogs.filter((c) =>
+      c.id.startsWith('goonhub-search-')
+    )
+
+    expect(searchCatalogs.length).toBeGreaterThan(0)
+    searchCatalogs.forEach((catalog) => {
+      expect(catalog.name).toBe('GoonHub Search')
+      let searchExtra = catalog.extra.find((e) => e.name === 'search')
+      expect(searchExtra.isRequired).toBe(true)
+    })
   })
 
   test('meta endpoint returns meta', async () => {
