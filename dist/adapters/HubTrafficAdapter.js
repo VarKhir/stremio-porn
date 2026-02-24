@@ -77,6 +77,7 @@ class HubTrafficAdapter extends _BaseAdapter.default {
           url.searchParams.set(name, params[name]);
         }
       });
+      url = url.toString();
     }
 
     let {
@@ -134,7 +135,7 @@ class HubTrafficAdapter extends _BaseAdapter.default {
 
     let streams = this._extractStreamsFromEmbed(body);
 
-    return streams && streams.map(stream => {
+    return (streams || []).map(stream => {
       stream.id = id;
       return stream;
     });

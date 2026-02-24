@@ -239,13 +239,17 @@ class PornClient {
   }
 
   async _invokeAdapterMethod(adapter, method, request, idProp) {
-    let results = await adapter[method](request)
-    if (method === 'getStreams') {
-      results = await this.debridClient.unrestrictStreams(results)
+    try {
+      let results = await adapter[method](request)
+      if (method === 'getStreams') {
+        results = await this.debridClient.unrestrictStreams(results)
+      }
+      return results.map((result) => {
+        return normalizeResult(adapter, result, idProp)
+      })
+    } catch (err) {
+      return []
     }
-    return results.map((result) => {
-      return normalizeResult(adapter, result, idProp)
-    })
   }
 
   // Aggregate method that dispatches requests to matching adapters
@@ -254,7 +258,7 @@ class PornClient {
     let adapters = this._getAdaptersForRequest(request, adapterMethod)
 
     if (!adapters.length) {
-      throw new Error('Couldn\'t find suitable adapters for a request')
+      return []
     }
 
     let results = []

@@ -75,8 +75,13 @@ class PornCom extends _BaseAdapter.default {
   }
 
   _extractQualitiesFromEmbedPage(body) {
-    return body.match(/['"]?id['"]?:\s*['"]\d+p['"]/gi) // Find id:"240p"
-    .map(item => item.match(/\d+/)[0]) // Extract 240
+    let matches = body.match(/['"]?id['"]?:\s*['"]\d+p['"]/gi); // Find id:"240p"
+
+    if (!matches || !matches.length) {
+      return [];
+    }
+
+    return matches.map(item => item.match(/\d+/)[0]) // Extract 240
     .filter(quality => Number(quality) < 360); // 360+ are restricted
   }
 
