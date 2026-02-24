@@ -2,10 +2,6 @@ import cacheManager from 'cache-manager'
 import HttpClient from './HttpClient'
 import DebridClient from './DebridClient'
 import PornHub from './adapters/PornHub'
-import RedTube from './adapters/RedTube'
-import YouPorn from './adapters/YouPorn'
-import SpankWire from './adapters/SpankWire'
-import PornCom from './adapters/PornCom'
 import XVideos from './adapters/XVideos'
 import XHamster from './adapters/XHamster'
 import Chaturbate from './adapters/Chaturbate'
@@ -13,6 +9,9 @@ import UsenetStreamer from './adapters/UsenetStreamer'
 
 // EPorner has restricted video downloads to 30 per day per guest
 // import EPorner from './adapters/EPorner'
+
+// RedTube, YouPorn, SpankWire: HubTraffic API deprecated
+// PornCom: API no longer available
 
 
 const ID = 'porn_id'
@@ -23,7 +22,7 @@ const CACHE_PREFIX = 'goonhub|'
 // so we only support 1 adapter per request for now.
 const MAX_ADAPTERS_PER_REQUEST = 1
 const BASE_ADAPTERS = [
-  PornHub, RedTube, YouPorn, SpankWire, PornCom, XVideos, XHamster, Chaturbate,
+  PornHub, XVideos, XHamster, Chaturbate,
 ]
 const isUsenetAdapter = (adapter, includeClass = false) => {
   return adapter instanceof UsenetStreamer ||
@@ -121,7 +120,12 @@ function makePornId(adapter, type, id) {
 }
 
 function parsePornId(pornId) {
-  let [adapter, type, id] = pornId.split(':').pop().split('-')
+  let str = pornId.split(':').pop()
+  let firstDash = str.indexOf('-')
+  let secondDash = str.indexOf('-', firstDash + 1)
+  let adapter = str.substring(0, firstDash)
+  let type = str.substring(firstDash + 1, secondDash)
+  let id = str.substring(secondDash + 1)
   return { adapter, type, id }
 }
 

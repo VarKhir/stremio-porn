@@ -13,14 +13,6 @@ var _DebridClient = _interopRequireDefault(require("./DebridClient"));
 
 var _PornHub = _interopRequireDefault(require("./adapters/PornHub"));
 
-var _RedTube = _interopRequireDefault(require("./adapters/RedTube"));
-
-var _YouPorn = _interopRequireDefault(require("./adapters/YouPorn"));
-
-var _SpankWire = _interopRequireDefault(require("./adapters/SpankWire"));
-
-var _PornCom = _interopRequireDefault(require("./adapters/PornCom"));
-
 var _XVideos = _interopRequireDefault(require("./adapters/XVideos"));
 
 var _XHamster = _interopRequireDefault(require("./adapters/XHamster"));
@@ -37,6 +29,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 // EPorner has restricted video downloads to 30 per day per guest
 // import EPorner from './adapters/EPorner'
+// RedTube, YouPorn, SpankWire: HubTraffic API deprecated
+// PornCom: API no longer available
 const ID = 'porn_id';
 const SORT_PROP_PREFIX = 'popularities.porn.';
 const CACHE_PREFIX = 'goonhub|'; // Making multiple requests to multiple adapters for different types
@@ -44,7 +38,7 @@ const CACHE_PREFIX = 'goonhub|'; // Making multiple requests to multiple adapter
 // so we only support 1 adapter per request for now.
 
 const MAX_ADAPTERS_PER_REQUEST = 1;
-const BASE_ADAPTERS = [_PornHub.default, _RedTube.default, _YouPorn.default, _SpankWire.default, _PornCom.default, _XVideos.default, _XHamster.default, _Chaturbate.default];
+const BASE_ADAPTERS = [_PornHub.default, _XVideos.default, _XHamster.default, _Chaturbate.default];
 
 const isUsenetAdapter = (adapter, includeClass = false) => {
   return adapter instanceof _UsenetStreamer.default || includeClass && adapter === _UsenetStreamer.default;
@@ -143,7 +137,12 @@ function makePornId(adapter, type, id) {
 }
 
 function parsePornId(pornId) {
-  let [adapter, type, id] = pornId.split(':').pop().split('-');
+  let str = pornId.split(':').pop();
+  let firstDash = str.indexOf('-');
+  let secondDash = str.indexOf('-', firstDash + 1);
+  let adapter = str.substring(0, firstDash);
+  let type = str.substring(firstDash + 1, secondDash);
+  let id = str.substring(secondDash + 1);
   return {
     adapter,
     type,

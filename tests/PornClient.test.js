@@ -104,4 +104,35 @@ describe('PornClient', () => {
   test('SEARCH_CATALOG_PREFIX is defined', () => {
     expect(PornClient.SEARCH_CATALOG_PREFIX).toBe('goonhub-search-')
   })
+
+  test('correctly routes meta.get for IDs containing dashes', async () => {
+    let client = new PornClient({ cache: '0' })
+
+    let mockItem = {
+      id: 'video-abc-123',
+      type: 'movie',
+      name: 'Test Video',
+    }
+
+    client.adapters.forEach((adapter) => {
+      adapter.getItem = jest.fn().mockImplementation((request) => {
+        if (request.query.id === 'video-abc-123') {
+          return Promise.resolve([mockItem])
+        }
+        return Promise.resolve([])
+      })
+    })
+
+    let request = {
+      query: {
+        type: 'movie',
+        porn_id: 'porn_id:PornHub-movie-video-abc-123',
+      },
+    }
+
+    let result = await client.invokeMethod('meta.get', request)
+
+    expect(result).toBeTruthy()
+    expect(result.id).toContain('video-abc-123')
+  })
 })
