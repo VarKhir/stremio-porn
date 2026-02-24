@@ -74,4 +74,34 @@ describe('PornClient', () => {
 
     expect(result).toBeUndefined()
   })
+
+  test('getSearchCatalogs returns search-only catalogs for each content type', () => {
+    let catalogs = PornClient.getSearchCatalogs({ cache: '0' })
+
+    expect(catalogs.length).toBeGreaterThan(0)
+
+    catalogs.forEach((catalog) => {
+      expect(catalog.id).toMatch(/^goonhub-search-/)
+      expect(catalog.name).toBe('GoonHub Search')
+
+      let searchExtra = catalog.extra.find((e) => e.name === 'search')
+      expect(searchExtra).toBeTruthy()
+      expect(searchExtra.isRequired).toBe(true)
+
+      expect(catalog.extraSupported).toContain('search')
+      expect(catalog.extraSupported).toContain('skip')
+    })
+  })
+
+  test('getSearchCatalogs includes movie and tv types', () => {
+    let catalogs = PornClient.getSearchCatalogs({ cache: '0' })
+    let types = catalogs.map((c) => c.type)
+
+    expect(types).toContain('movie')
+    expect(types).toContain('tv')
+  })
+
+  test('SEARCH_CATALOG_PREFIX is defined', () => {
+    expect(PornClient.SEARCH_CATALOG_PREFIX).toBe('goonhub-search-')
+  })
 })

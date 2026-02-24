@@ -81,8 +81,10 @@ class PornCom extends _BaseAdapter.default {
       return [];
     }
 
-    return matches.map(item => item.match(/\d+/)[0]) // Extract 240
-    .filter(quality => Number(quality) < 360); // 360+ are restricted
+    return matches.map(item => {
+      let m = item.match(/\d+/);
+      return m ? m[0] : null;
+    }).filter(quality => quality && Number(quality) < 360); // 360+ are restricted
   }
 
   async _getQualities(id) {

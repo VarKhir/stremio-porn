@@ -87,6 +87,7 @@ function buildSearchCatalogs(adapters) {
     extraSupported: ['search', 'skip'],
   }))
 }
+
 const METHODS = {
   'stream.find': {
     adapterMethod: 'getStreams',
